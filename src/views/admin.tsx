@@ -13,9 +13,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
   Users, Store, Package, MessageSquare, AlertTriangle, Banknote, TrendingUp,
-  CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star,
+  CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star, Phone,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { AdminAgreementManager } from '@/components/admin-agreement-manager'
+import { AdminFeedbackManager } from '@/components/admin-feedback-manager'
+import { AdminAuditLog } from '@/components/admin-audit-log'
+import { AdminRevenueReport } from '@/components/admin-revenue-report'
+import { AdminReferralManager } from '@/components/admin-referral-manager'
 
 export function AdminPage() {
   const { user, setView, setAuthModalOpen } = useStore()
@@ -92,6 +97,11 @@ export function AdminPage() {
           <TabsTrigger value="reports">Reports {stats?.openReports > 0 && <Badge className="ml-1 bg-red-500 text-white">{stats.openReports}</Badge>}</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
+          <TabsTrigger value="agreement">Agreement</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="audit">Audit Log</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="referrals">Referrals</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -143,18 +153,17 @@ export function AdminPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <p className="font-bold">{s.name}</p>
-                  <Badge className={
+                  <Badge className={`capitalize ${
                     s.status === 'active' ? 'bg-green-600 text-white' :
                     s.status === 'pending_approval' ? 'bg-amber-500 text-white' :
                     s.status === 'suspended' ? 'bg-red-600 text-white' :
                     'bg-gray-500 text-white'
-                  } className="capitalize">{s.status.replace('_', ' ')}</Badge>
-                  {s.owner?.matricNumber?.includes('AHS') && <Badge variant="secondary">Food seller</Badge>}
+                  }`}>{s.status.replace('_', ' ')}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">{s.description}</p>
                 <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                   <p>Owner: {s.owner?.fullName} ({s.owner?.matricNumber}) — {s.owner?.department} · {s.owner?.level} Level</p>
-                  <p>Bank: {s.bankName} · {s.accountNumber} ({s.accountName}) · 📞 {s.phoneNumber}</p>
+                  <p className="flex items-center gap-1 flex-wrap">Bank: {s.bankName} · {s.accountNumber} ({s.accountName}) · <Phone className="w-3 h-3 inline" /> {s.phoneNumber}</p>
                   <p>{s._count?.products || 0} listings · {s._count?.orders || 0} orders · ⭐ {s.rating?.toFixed?.(1) || 'New'}</p>
                 </div>
               </div>
@@ -306,12 +315,12 @@ export function AdminPage() {
           {reports.map((r) => (
             <div key={r.id} className="bg-card border rounded-lg p-3">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <Badge className={
+                <Badge className={`capitalize ${
                   r.status === 'open' ? 'bg-red-500 text-white' :
                   r.status === 'resolved' ? 'bg-green-600 text-white' :
                   r.status === 'dismissed' ? 'bg-gray-500 text-white' :
                   'bg-amber-500 text-white'
-                } className="capitalize">{r.status}</Badge>
+                }`}>{r.status}</Badge>
                 <Badge variant="outline" className="text-xs">{r.reason}</Badge>
                 <span className="text-xs text-muted-foreground ml-auto">{new Date(r.createdAt).toLocaleString()}</span>
               </div>
@@ -363,15 +372,15 @@ export function AdminPage() {
                   <span className="text-muted-foreground"> · charge ₦{o.serviceCharge.toLocaleString()} · payout ₦{o.sellerPayout.toLocaleString()}</span>
                 </p>
               </div>
-              <Badge className={
+              <Badge className={`capitalize ${
                 o.status === 'completed' ? 'bg-green-600 text-white' :
                 o.status === 'disputed' ? 'bg-red-600 text-white' :
-                o.status === 'refunded' ? 'bg-purple-600 text-white' :
+                o.status === 'refunded' ? 'bg-slate-600 text-white' :
                 'bg-amber-500 text-white'
-              } className="capitalize">{o.status.replace('_', ' ')}</Badge>
+              }`}>{o.status.replace('_', ' ')}</Badge>
               {o.status === 'disputed' && (
                 <div className="flex gap-1">
-                  <Button size="sm" variant="outline" className="bg-purple-600 hover:bg-purple-700 text-white" onClick={async () => {
+                  <Button size="sm" variant="outline" className="bg-slate-600 hover:bg-slate-700 text-white" onClick={async () => {
                     const note = prompt('Refund reason:')
                     if (!note) return
                     const { error } = await api('/api/admin/orders', { method: 'POST', body: { orderId: o.id, action: 'refund', note } })
@@ -397,6 +406,26 @@ export function AdminPage() {
         {/* Broadcast */}
         <TabsContent value="broadcast" className="mt-4 space-y-3">
           <BroadcastPanel onSent={reload} />
+        </TabsContent>
+
+        <TabsContent value="agreement" className="mt-4">
+          <AdminAgreementManager />
+        </TabsContent>
+
+        <TabsContent value="feedback" className="mt-4">
+          <AdminFeedbackManager />
+        </TabsContent>
+
+        <TabsContent value="audit" className="mt-4">
+          <AdminAuditLog />
+        </TabsContent>
+
+        <TabsContent value="revenue" className="mt-4">
+          <AdminRevenueReport />
+        </TabsContent>
+
+        <TabsContent value="referrals" className="mt-4">
+          <AdminReferralManager />
         </TabsContent>
       </Tabs>
     </div>
@@ -430,7 +459,7 @@ function BroadcastPanel({ onSent }: { onSent: () => void }) {
     const ids = userIds.split(',').map((s) => s.trim()).filter(Boolean)
     const { data, error } = await api('/api/messages/broadcast', {
       method: 'POST',
-      body: { subject: subject || 'Message from ABUAD Marketplace Admin', body, userIds: ids },
+      body: { subject: subject || 'Message from UNI MART Admin', body, userIds: ids },
     })
     setBusy(false)
     if (error) { toast.error(error); return }

@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import {
   ChevronRight, Store, ShieldCheck, Banknote, Phone, Mail, Loader2, ScrollText,
-  CheckCircle2, AlertCircle, UtensilsCrossed,
+  CheckCircle2, AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -27,7 +27,6 @@ export function SetupStorefrontPage() {
   const [form, setForm] = useState({
     name: '', description: '', type: 'both',
     bankName: '', accountName: '', accountNumber: '', phoneNumber: '', contactEmail: '',
-    sellsFood: false,
   })
 
   useEffect(() => {
@@ -65,10 +64,8 @@ export function SetupStorefrontPage() {
     })
     setBusy(false)
     if (error) { toast.error('Setup failed', { description: error }); return }
-    toast.success(form.sellsFood ? 'Storefront submitted for admin approval' : 'Storefront created!', {
-      description: data.storefront.status === 'pending_approval'
-        ? 'You will be notified once the admin approves your food storefront.'
-        : 'You can now start listing products and services.',
+    toast.success('Storefront created!', {
+      description: 'You can now start listing products and services.',
     })
     setView({ name: 'storefront' })
   }
@@ -130,13 +127,9 @@ export function SetupStorefrontPage() {
                 </SelectContent>
               </Select>
             </div>
-            <label className="flex items-start gap-2 cursor-pointer p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-500/30 rounded">
-              <Checkbox checked={form.sellsFood} onCheckedChange={(v) => setForm({ ...form, sellsFood: !!v })} className="mt-0.5" />
-              <div className="text-sm">
-                <p className="font-bold flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4 text-amber-600" /> I will sell food or drinks</p>
-                <p className="text-xs text-muted-foreground">Food storefronts require admin approval before listings go live. This is to prevent food/drink poisoning.</p>
-              </div>
-            </label>
+            <div className="p-3 bg-muted/50 border rounded text-xs text-muted-foreground">
+              Food and drink sales aren't currently permitted on UNI MART — see our <button type="button" className="text-primary underline" onClick={() => setView({ name: 'campus-safety' })}>Campus Safety Policy</button> for the full list of what's allowed.
+            </div>
           </div>
         </div>
 

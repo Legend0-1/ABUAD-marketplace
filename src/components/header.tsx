@@ -6,6 +6,8 @@ import { api } from '@/lib/api'
 import {
   Search, ShoppingCart, User, Menu, Store, Package, MessageSquare,
   LayoutDashboard, LogOut, ChevronDown, Shield, X, Bell,
+  Truck, FileText, Shirt, WashingMachine, Printer, Footprints,
+  Smartphone, BookOpen, Sparkles, Plug, BedDouble, Tag, type LucideIcon,
 } from 'lucide-react'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
@@ -16,20 +18,19 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'Truck': '🚚',
-  'FileText': '📝',
-  'UtensilsCrossed': '🍽️',
-  'Shirt': '👕',
-  'WashingMachine': '🧺',
-  'Printer': '🖨️',
-  'Footprints': '👞',
-  'Smartphone': '📱',
-  'BookOpen': '📚',
-  'Sparkles': '💄',
-  'Plug': '🔌',
-  'BedDouble': '🛏️',
-  'Tag': '🏷️',
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  'Truck': Truck,
+  'FileText': FileText,
+  'Shirt': Shirt,
+  'WashingMachine': WashingMachine,
+  'Printer': Printer,
+  'Footprints': Footprints,
+  'Smartphone': Smartphone,
+  'BookOpen': BookOpen,
+  'Sparkles': Sparkles,
+  'Plug': Plug,
+  'BedDouble': BedDouble,
+  'Tag': Tag,
 }
 
 export function Header() {
@@ -37,8 +38,27 @@ export function Header() {
   const [searchQ, setSearchQ] = useState('')
   const [categories, setCategories] = useState<any[]>([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const searchRef = useRef<HTMLInputElement>(null)
+  const megaMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close the mega-menu on outside click or Escape
+  useEffect(() => {
+    if (!megaMenuOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (megaMenuRef.current && !megaMenuRef.current.contains(e.target as Node)) {
+        setMegaMenuOpen(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMegaMenuOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [megaMenuOpen])
 
   // Load categories
   useEffect(() => {
@@ -100,7 +120,7 @@ export function Header() {
 
   return (
     <>
-      {/* Top purple bar */}
+      {/* Deep lagoon header */}
       <header className="amazon-header text-white sticky top-0 z-40 shadow-lg">
         <div className="max-w-[1500px] mx-auto px-3 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-4 h-14 sm:h-16">
@@ -118,13 +138,7 @@ export function Header() {
               onClick={() => sv({ name: 'home' })}
               className="flex items-center gap-2 hover:bg-white/10 px-2 py-1.5 rounded transition shrink-0"
             >
-              <div className="w-9 h-9 rounded-md bg-white/95 flex items-center justify-center text-primary font-black text-lg shadow-inner">
-                A
-              </div>
-              <div className="hidden sm:flex flex-col leading-none text-left">
-                <span className="text-[10px] text-white/70 -mb-0.5">ABUAD</span>
-                <span className="text-sm font-bold tracking-tight">Marketplace</span>
-              </div>
+              <img src="/logo-header.png" alt="UNI MART" className="h-8 w-auto" />
             </button>
 
             {/* Deliver-to (decorative) */}
@@ -154,7 +168,7 @@ export function Header() {
                       onClick={() => sv({ name: 'category', slug: c.slug, categoryName: c.name })}
                       className="cursor-pointer text-sm"
                     >
-                      <span className="mr-2">{CATEGORY_ICONS[c.icon || 'Tag'] || '🏷️'}</span>
+                      {(() => { const Icon = CATEGORY_ICONS[c.icon || 'Tag'] || Tag; return <Icon className="w-4 h-4 mr-2 text-muted-foreground shrink-0" /> })()}
                       {c.name}
                       <span className="ml-auto text-xs text-muted-foreground">{c._count?.products || 0}</span>
                     </DropdownMenuItem>
@@ -190,7 +204,7 @@ export function Header() {
                   >
                     <MessageSquare className="w-5 h-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-accent text-accent-foreground text-[10px] font-bold rounded-full min-w-4 h-4 px-1 flex items-center justify-center pulse-purple">
+                      <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-4 h-4 px-1 flex items-center justify-center pulse-purple">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -214,7 +228,7 @@ export function Header() {
                     <div className="relative">
                       <ShoppingCart className="w-6 h-6" />
                       {cartCount > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-bold rounded-full min-w-4 h-4 px-1 flex items-center justify-center">
+                        <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-4 h-4 px-1 flex items-center justify-center">
                           {cartCount}
                         </span>
                       )}
@@ -271,6 +285,17 @@ export function Header() {
                       <DropdownMenuItem onClick={() => sv({ name: 'agreement' })} className="cursor-pointer">
                         <Shield className="w-4 h-4 mr-2" /> Seller Agreement
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => sv({ name: 'deliveries' })} className="cursor-pointer">
+                        <Truck className="w-4 h-4 mr-2" /> Deliveries
+                      </DropdownMenuItem>
+                      {(user.isAdmin || user.isHR) && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => sv({ name: 'hr-queue' })} className="cursor-pointer text-primary font-medium">
+                            <Truck className="w-4 h-4 mr-2" /> HR Dashboard
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       {user.isAdmin && (
                         <>
                           <DropdownMenuSeparator />
@@ -298,7 +323,7 @@ export function Header() {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     onClick={() => openAuth('register')}
                   >
                     Create Account
@@ -309,13 +334,54 @@ export function Header() {
           </div>
 
           {/* Secondary nav: categories scrollable bar */}
-          <div className="hidden lg:flex items-center gap-1 h-10 text-sm border-t border-white/10 overflow-x-auto scrollbar-thin">
+          <div className="hidden lg:flex items-center gap-1 h-10 text-sm border-t border-white/10 overflow-x-auto scrollbar-thin relative">
             <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded hover:bg-white/10 font-bold transition shrink-0"
+              onClick={() => setMegaMenuOpen((v) => !v)}
+              className={cn(
+                "flex items-center gap-1 px-3 py-1.5 rounded hover:bg-white/10 font-bold transition shrink-0",
+                megaMenuOpen && "bg-white/15"
+              )}
             >
               <Menu className="w-4 h-4" /> All Categories
             </button>
+
+            {megaMenuOpen && (
+              <div
+                ref={megaMenuRef}
+                className="absolute left-0 top-full mt-1 w-[min(90vw,720px)] bg-popover text-popover-foreground border rounded-lg shadow-xl z-50 p-4"
+              >
+                <div className="grid grid-cols-3 gap-x-6 gap-y-1">
+                  {categories.map((c) => {
+                    const Icon = CATEGORY_ICONS[c.icon || 'Tag'] || Tag
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => { sv({ name: 'category', slug: c.slug, categoryName: c.name }); setMegaMenuOpen(false) }}
+                        className="flex items-center gap-2 px-2 py-2 rounded hover:bg-accent text-left text-sm"
+                      >
+                        <Icon className="w-4 h-4 text-primary shrink-0" />
+                        <span className="flex-1 truncate">{c.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{c._count?.products || 0}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="border-t mt-3 pt-3 flex items-center justify-between">
+                  <button
+                    onClick={() => { sv({ name: 'sell' }); setMegaMenuOpen(false) }}
+                    className="text-xs text-primary font-semibold hover:underline"
+                  >
+                    + List something new
+                  </button>
+                  <button
+                    onClick={() => { sv({ name: 'about' }); setMegaMenuOpen(false) }}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    About UNI MART
+                  </button>
+                </div>
+              </div>
+            )}
             {categories.filter(c => (c._count?.products || 0) > 0 || c.origin === 'default').slice(0, 14).map((c) => (
               <button
                 key={c.id}
@@ -330,7 +396,7 @@ export function Header() {
             ))}
             <button
               onClick={() => sv({ name: 'sell' })}
-              className="ml-auto px-3 py-1.5 rounded bg-accent hover:bg-accent/90 text-accent-foreground font-bold transition shrink-0"
+              className="ml-auto px-3 py-1.5 rounded bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition shrink-0"
             >
               + Sell on ABUAD
             </button>
@@ -363,7 +429,7 @@ export function Header() {
                   onClick={() => { sv({ name: 'category', slug: c.slug, categoryName: c.name }); setMobileMenuOpen(false) }}
                   className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm flex items-center gap-2"
                 >
-                  <span>{CATEGORY_ICONS[c.icon || 'Tag'] || '🏷️'}</span>
+                  {(() => { const Icon = CATEGORY_ICONS[c.icon || 'Tag'] || Tag; return <Icon className="w-4 h-4 text-muted-foreground shrink-0" /> })()}
                   <span className="flex-1">{c.name}</span>
                   <span className="text-xs text-muted-foreground">{c._count?.products || 0}</span>
                 </button>
@@ -377,6 +443,10 @@ export function Header() {
                   <button onClick={() => { sv({ name: 'sell' }); setMobileMenuOpen(false) }} className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm">Sell a Product / Service</button>
                   <button onClick={() => { sv({ name: 'inbox' }); setMobileMenuOpen(false) }} className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm">Inbox {unreadCount > 0 && <Badge className="ml-2">{unreadCount}</Badge>}</button>
                   <button onClick={() => { sv({ name: 'agreement' }); setMobileMenuOpen(false) }} className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm">Seller Agreement</button>
+                  <button onClick={() => { sv({ name: 'deliveries' }); setMobileMenuOpen(false) }} className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm">Deliveries</button>
+                  {(user.isAdmin || user.isHR) && (
+                    <button onClick={() => { sv({ name: 'hr-queue' }); setMobileMenuOpen(false) }} className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm font-medium text-primary">HR Dashboard</button>
+                  )}
                   {user.isAdmin && (
                     <button onClick={() => { sv({ name: 'admin' }); setMobileMenuOpen(false) }} className="w-full text-left px-3 py-2 hover:bg-accent/10 rounded text-sm font-medium text-primary">Admin Dashboard</button>
                   )}

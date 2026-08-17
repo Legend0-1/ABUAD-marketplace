@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
 
-// Admin can see ALL conversations (silent oversight)
+// Admin can review conversations as part of fraud/safety investigations — disclosed in the Seller Agreement (see src/lib/seed.ts)
 export async function GET() {
   try {
     await requireAdmin()

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
-  Package, ChevronRight, CheckCircle2, AlertCircle, MessageSquare, Loader2,
+  Package, ChevronRight, CheckCircle2, AlertCircle, MessageSquare, Loader2, MapPin,
 } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -166,7 +166,7 @@ function StatusBadge({ status }: { status: string }) {
   const cls = status === 'completed' ? 'bg-green-600 text-white'
     : status === 'disputed' ? 'bg-red-600 text-white'
     : status === 'acknowledged' ? 'bg-blue-600 text-white'
-    : status === 'refunded' ? 'bg-purple-600 text-white'
+    : status === 'refunded' ? 'bg-slate-600 text-white'
     : 'bg-amber-500 text-white'
   return <Badge className={cls + ' capitalize'}>{status.replace('_', ' ')}</Badge>
 }
@@ -196,7 +196,7 @@ function BuyerOrderCard({ order, onAck, onDispute, onMessage, onPay, busy }: { o
           <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
             <span className="font-bold text-primary">₦{order.totalAmount.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground">({order.quantity} × ₦{order.unitPrice.toLocaleString()})</span>
-            {order.deliveryAddress && <span className="text-xs text-muted-foreground">📍 {order.deliveryAddress}</span>}
+            {order.deliveryAddress && <span className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {order.deliveryAddress}</span>}
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <Button size="sm" variant="outline" onClick={onMessage}>
@@ -246,10 +246,10 @@ function SellerOrderCard({ order, onMessage }: { order: any; onMessage: () => vo
                 {order.product?.title}
               </button>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Buyer: {order.buyer?.fullName} ({order.buyer?.matricNumber}) · {new Date(order.createdAt).toLocaleDateString()}
+                Buyer: {order.buyer?.fullName} · {new Date(order.createdAt).toLocaleDateString()}
               </p>
               <p className="text-xs text-muted-foreground">Order ref: {order.reference}</p>
-              {order.deliveryAddress && <p className="text-xs">📍 Deliver to: {order.deliveryAddress}</p>}
+              {order.deliveryAddress && <p className="text-xs flex items-center gap-1"><MapPin className="w-3 h-3" /> Deliver to: {order.deliveryAddress}</p>}
               {order.deliveryNotes && <p className="text-xs italic">"{order.deliveryNotes}"</p>}
             </div>
             <StatusBadge status={order.status} />

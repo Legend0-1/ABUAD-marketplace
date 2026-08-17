@@ -99,7 +99,7 @@ export function StorefrontPage() {
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold text-amber-700 dark:text-amber-400">Pending admin approval</p>
-                <p className="text-amber-700/80 dark:text-amber-400/80">Your storefront is being reviewed because it sells food or drinks. You'll be notified in your inbox once approved.</p>
+                <p className="text-amber-700/80 dark:text-amber-400/80">Your storefront is under review by the admin team. You'll be notified in your inbox once approved.</p>
               </div>
             </div>
           )}

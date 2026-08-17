@@ -35,7 +35,10 @@ export async function GET(req: NextRequest) {
       ],
     },
     take: 10,
-    include: { owner: { select: { id: true, fullName: true, profilePicture: true } } },
+    select: {
+      id: true, ownerId: true, name: true, description: true, type: true, rating: true, totalSales: true,
+      owner: { select: { id: true, fullName: true, profilePicture: true } },
+    },
   })
 
   const categories = await db.category.findMany({

@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Star, ShoppingCart, Zap, ShieldCheck, MapPin, ChevronRight, MessageSquare,
-  Flag, ThumbsUp, Reply, Send, Play, Volume2, AlertCircle, Loader2, CheckCircle2, Store,
+  Flag, ThumbsUp, Reply, Send, Play, Volume2, AlertCircle, Loader2, CheckCircle2, Store, Package,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -186,7 +186,7 @@ export function ProductPage({ productId }: { productId: string }) {
               )
             ) : (
               <div className="text-muted-foreground flex flex-col items-center">
-                <div className="text-6xl mb-2">📦</div>
+                <Package className="w-12 h-12 mb-2 opacity-50" />
                 <p>No media</p>
               </div>
             )}
@@ -278,12 +278,12 @@ export function ProductPage({ productId }: { productId: string }) {
                   <Button className="w-full" size="lg" variant="outline" onClick={onAddToCart}>
                     <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
                   </Button>
-                  <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" size="lg" onClick={onBuyNow}>
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" size="lg" onClick={onBuyNow}>
                     <Zap className="w-4 h-4 mr-2" /> Buy Now
                   </Button>
                 </>
               ) : (
-                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" size="lg" onClick={onBuyService}>
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" size="lg" onClick={onBuyService}>
                   <Zap className="w-4 h-4 mr-2" /> Book this Service
                 </Button>
               )}
@@ -333,12 +333,12 @@ export function ProductPage({ productId }: { productId: string }) {
                 <span>{product.storefront.rating?.toFixed?.(1) || 'New'} seller rating</span>
               </p>
               <p className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /> {product.seller.department}</p>
-              <p className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Matric: {product.seller.matricNumber}</p>
+              <p className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Verified ABUAD student</p>
               <p className="flex items-center gap-1.5"><Store className="w-3 h-3" /> {product.seller.level} Level</p>
             </div>
             {product.category?.requiresApproval && (
-              <Badge className="bg-green-600 text-white w-full justify-center">
-                <ShieldCheck className="w-3 h-3 mr-1" /> Admin-Verified Food Seller
+              <Badge className="bg-verified text-verified-foreground w-full justify-center">
+                <ShieldCheck className="w-3 h-3 mr-1" /> Admin-Verified Seller
               </Badge>
             )}
             <Button variant="outline" size="sm" className="w-full" onClick={() => setView({ name: 'storefrontView', ownerId: product.sellerId })}>
@@ -457,7 +457,7 @@ export function ProductPage({ productId }: { productId: string }) {
                 <SelectContent>
                   <SelectItem value="fraud">Suspected fraud / scam</SelectItem>
                   <SelectItem value="fake_product">Fake or counterfeit product</SelectItem>
-                  <SelectItem value="food_safety">Food safety concern</SelectItem>
+                  <SelectItem value="misrepresented">Item not as described</SelectItem>
                   <SelectItem value="harassment">Harassment or abuse</SelectItem>
                   <SelectItem value="prohibited">Prohibited item (alcohol, drugs, weapons, etc.)</SelectItem>
                   <SelectItem value="impersonation">Impersonating another student</SelectItem>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
 import { resolveBankCode, createTransferRecipient, initiateTransfer } from '@/lib/paystack'
+import { checkAndCreateReferralCommission } from '@/lib/referral'
 
 // Buyer acknowledges receipt -> triggers a real payout to the seller's bank account
 // via Paystack Transfers, out of the platform's escrow balance.
@@ -82,6 +83,8 @@ export async function POST(req: NextRequest) {
         where: { id: order.storefrontId },
         data: { totalSales: { increment: order.sellerPayout } },
       })
+
+      await checkAndCreateReferralCommission(order.buyerId)
     } catch (payoutError: any) {
       // Buyer's acknowledgment still stands; flag the payout for admin follow-up
       // rather than silently losing the seller's money.
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
         data: {
           conversationId: conv.id,
           senderId: user.id,
-          body: `✅ I have acknowledged receipt of order ${order.reference}. The platform will now process your payout of ₦${order.sellerPayout.toLocaleString()} to your bank account. Thank you!`,
+          body: `I have acknowledged receipt of order ${order.reference}. The platform will now process your payout of ₦${order.sellerPayout.toLocaleString()} to your bank account. Thank you!`,
         },
       })
     }

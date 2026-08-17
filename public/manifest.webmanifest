@@ -1,0 +1,31 @@
+{
+  "name": "UNI MART",
+  "short_name": "UNI MART",
+  "description": "Verified ABUAD student-only marketplace. Buy and sell food, gadgets, clothes, services and more on a safe, moderated platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#153B3D",
+  "theme_color": "#153B3D",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

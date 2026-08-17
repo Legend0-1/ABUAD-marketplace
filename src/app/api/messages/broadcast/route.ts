@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
           type: 'admin_direct',
           participantAId: user.id,
           participantBId: u.id,
-          subject: subject || 'Message from ABUAD Marketplace Admin',
+          subject: subject || 'Message from UNI MART Admin',
         },
       })
     }

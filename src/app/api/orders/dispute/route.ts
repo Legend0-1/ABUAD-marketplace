@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         data: {
           conversationId: conv.id,
           senderId: user.id,
-          body: `⚠️ I am disputing order ${order.reference}. Reason: ${reason}. The admin has been notified and will review this case.`,
+          body: `I am disputing order ${order.reference}. Reason: ${reason}. The admin has been notified and will review this case.`,
         },
       })
     }

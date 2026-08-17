@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     data: {
       conversationId: conv.id,
       senderId: admin.id,
-      body: `📧 EMAIL — ${subject}\n\n${body}`,
+      body: `EMAIL: ${subject}\n\n${body}`,
     },
   })
 

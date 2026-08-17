@@ -6,12 +6,11 @@ import { api } from '@/lib/api'
 import { ProductCard } from '@/components/product-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, ChevronLeft, ShieldCheck, Truck, UtensilsCrossed, FileText, Smartphone, Shirt, Printer, Footprints, WashingMachine, BookOpen, Sparkles, Plug, BedDouble, Star, TrendingUp, Tag, Store } from 'lucide-react'
+import { ChevronRight, ChevronLeft, ShieldCheck, Truck, Scale, FileText, Smartphone, Shirt, Printer, Footprints, WashingMachine, BookOpen, Sparkles, Plug, BedDouble, Star, TrendingUp, Tag, Store } from 'lucide-react'
 
 const CATEGORY_ICONS: Record<string, any> = {
   'Truck': Truck,
   'FileText': FileText,
-  'UtensilsCrossed': UtensilsCrossed,
   'Shirt': Shirt,
   'WashingMachine': WashingMachine,
   'Printer': Printer,
@@ -29,13 +28,13 @@ const HERO_SLIDES = [
     title: 'Trade Smarter on Campus',
     subtitle: 'Buy & sell with verified ABUAD students. Safe, fast, and trusted.',
     cta: 'Start Selling',
-    bg: 'from-purple-700 via-purple-600 to-fuchsia-600',
+    bg: 'from-teal-900 via-teal-800 to-amber-700',
     image: '/hero-marketplace.svg',
   },
   {
-    title: 'Hungry? Get hot meals delivered to your hostel',
-    subtitle: 'Every food storefront is admin-verified to keep you safe.',
-    cta: 'Order Food',
+    title: 'Need something picked up or delivered?',
+    subtitle: 'Trusted student runners for errands and deliveries across campus.',
+    cta: 'Find Delivery Services',
     bg: 'from-amber-600 via-orange-600 to-red-600',
     image: '/hero-food.svg',
   },
@@ -43,7 +42,7 @@ const HERO_SLIDES = [
     title: 'Phone cracked? Get it fixed today.',
     subtitle: 'Trusted campus techs for screen replacement, flashing & accessories.',
     cta: 'Find Phone Services',
-    bg: 'from-blue-700 via-indigo-600 to-purple-600',
+    bg: 'from-blue-700 via-cyan-700 to-teal-600',
     image: '/hero-tech.svg',
   },
   {
@@ -60,7 +59,7 @@ export function HomePage() {
   const [categories, setCategories] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
-  const [foodProducts, setFoodProducts] = useState<any[]>([])
+  const [deliveryProducts, setDeliveryProducts] = useState<any[]>([])
   const [topRated, setTopRated] = useState<any[]>([])
   const [slide, setSlide] = useState(0)
 
@@ -74,7 +73,7 @@ export function HomePage() {
       if (prods.data?.products) {
         setProducts(prods.data.products)
         setServices(prods.data.products.filter((p) => p.kind === 'service').slice(0, 8))
-        setFoodProducts(prods.data.products.filter((p) => p.category?.slug === 'food-drinks').slice(0, 8))
+        setDeliveryProducts(prods.data.products.filter((p) => p.category?.slug === 'delivery-services').slice(0, 8))
         setTopRated([...prods.data.products].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8))
       }
     })()
@@ -92,7 +91,7 @@ export function HomePage() {
       return
     }
     if (cta === 'Start Selling') setView({ name: 'sell' })
-    else if (cta === 'Order Food') setView({ name: 'category', slug: 'food-drinks', categoryName: 'Food & Drinks' })
+    else if (cta === 'Find Delivery Services') setView({ name: 'category', slug: 'delivery-services', categoryName: 'Delivery Services' })
     else if (cta === 'Find Phone Services') setView({ name: 'category', slug: 'phones-gadgets', categoryName: 'Phones & Gadgets' })
     else if (cta === 'Browse Notes') setView({ name: 'category', slug: 'note-writing-assignments-projects', categoryName: 'Note Writing, Assignments & Projects' })
   }
@@ -118,7 +117,7 @@ export function HomePage() {
               </h1>
               <p className="text-base sm:text-lg text-white/90 mb-6">{hero.subtitle}</p>
               <div className="flex flex-wrap gap-3">
-                <Button size="lg" className="bg-white text-purple-700 hover:bg-white/90 font-bold" onClick={() => handleCta(hero.cta)}>
+                <Button size="lg" className="bg-white text-teal-900 hover:bg-white/90 font-bold" onClick={() => handleCta(hero.cta)}>
                   {hero.cta} <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
                 <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10" onClick={() => setView({ name: 'category', slug: 'clothes-fashion', categoryName: 'Clothes & Fashion' })}>
@@ -181,7 +180,7 @@ export function HomePage() {
         </section>
 
         {/* Today's Deals banner */}
-        <section className="bg-gradient-to-r from-purple-100 via-fuchsia-50 to-purple-100 dark:from-purple-950/30 dark:via-fuchsia-950/30 dark:to-purple-950/30 rounded-xl p-5 sm:p-6 border border-primary/20">
+        <section className="bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-amber-950/30 rounded-xl p-5 sm:p-6 border border-primary/20">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
               <TrendingUp className="w-5 h-5" />
@@ -198,23 +197,23 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* Food section */}
-        {foodProducts.length > 0 && (
+        {/* Delivery section */}
+        {deliveryProducts.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <UtensilsCrossed className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-bold">Fresh Food & Drinks</h2>
+                <Truck className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-bold">Errands & Delivery</h2>
                 <Badge variant="secondary" className="text-xs">
-                  <ShieldCheck className="w-3 h-3 mr-1" /> Admin-Verified Sellers
+                  <ShieldCheck className="w-3 h-3 mr-1" /> Verified ABUAD Runners
                 </Badge>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setView({ name: 'category', slug: 'food-drinks', categoryName: 'Food & Drinks' })}>
+              <Button variant="ghost" size="sm" onClick={() => setView({ name: 'category', slug: 'delivery-services', categoryName: 'Delivery Services' })}>
                 See all <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              {foodProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+              {deliveryProducts.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>
           </section>
         )}
@@ -283,8 +282,8 @@ export function HomePage() {
           {[
             { icon: ShieldCheck, title: 'Matric-Verified', text: 'Every account is tied to a unique ABUAD matric number.' },
             { icon: Truck, title: 'Buyer Acknowledgement', text: 'Sellers are paid only after you confirm receipt.' },
-            { icon: UtensilsCrossed, title: 'Food Safety', text: 'Food storefronts are individually approved by admin.' },
-            { icon: Sparkles, title: 'Admin Oversight', text: 'All inbox messages are monitored to prevent fraud.' },
+            { icon: Scale, title: 'Real Dispute Support', text: 'A real admin reviews every dispute, not an automated form.' },
+            { icon: Sparkles, title: 'Fraud Protection', text: 'Suspicious activity is reviewed by our safety team.' },
           ].map((f, i) => (
             <div key={i} className="bg-card rounded-lg p-4 border flex gap-3 items-start">
               <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center shrink-0">

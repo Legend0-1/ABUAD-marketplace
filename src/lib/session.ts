@@ -12,6 +12,8 @@ export type SessionUser = {
   profilePicture: string | null
   isAdmin: boolean
   isBanned: boolean
+  isHR: boolean
+  referralCode: string | null
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -33,6 +35,9 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
         profilePicture: true,
         isAdmin: true,
         isBanned: true,
+        twoFactorEnabled: true,
+        isHR: true,
+        referralCode: true,
       },
     })
     if (!user) return null
@@ -52,5 +57,11 @@ export async function requireUser(): Promise<SessionUser> {
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await requireUser()
   if (!user.isAdmin) throw new Error('Admin only')
+  return user
+}
+
+export async function requireAdminOrHR(): Promise<SessionUser> {
+  const user = await requireUser()
+  if (!user.isAdmin && !user.isHR) throw new Error('Admin or HR only')
   return user
 }

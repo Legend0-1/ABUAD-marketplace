@@ -153,7 +153,7 @@ export function InboxThreadPage({ conversationId }: { conversationId: string }) 
                   mine
                     ? 'bg-primary text-primary-foreground'
                     : m.sender?.isAdmin
-                    ? 'bg-purple-100 dark:bg-purple-950/40 text-foreground border border-purple-300/40'
+                    ? 'bg-teal-100 dark:bg-teal-950/40 text-foreground border border-teal-300/40'
                     : 'bg-card border'
                 }`}>
                   {m.body}

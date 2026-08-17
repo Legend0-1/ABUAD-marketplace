@@ -1,0 +1,25 @@
+{
+  "packageId": "ng.edu.abuad.marketplace",
+  "host": "your-app.vercel.app",
+  "name": "ABUAD Marketplace",
+  "launcherName": "UNI MART",
+  "display": "standalone",
+  "themeColor": "#153B3D",
+  "navigationColor": "#153B3D",
+  "backgroundColor": "#153B3D",
+  "startUrl": "/",
+  "iconUrl": "https://your-app.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://your-app.vercel.app/icons/icon-512-maskable.png",
+  "webManifestUrl": "https://your-app.vercel.app/manifest.webmanifest",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "enableNotifications": true,
+  "orientation": "portrait",
+  "fallbackType": "customtabs"
+}

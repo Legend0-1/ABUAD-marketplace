@@ -22,6 +22,17 @@ import { AdminPage } from '@/views/admin'
 import { AgreementPage } from '@/views/agreement'
 import { SetupStorefrontPage } from '@/views/setup-storefront'
 import { CartDrawer } from '@/components/cart-drawer'
+import { AboutPage } from '@/views/about'
+import { CampusSafetyPage } from '@/views/campus-safety'
+import { ServiceChargePage } from '@/views/service-charge'
+import { SustainabilityPage } from '@/views/sustainability'
+import { DisputeResolutionPage } from '@/views/dispute-resolution'
+import { ReportUserPage } from '@/views/report-user'
+import { ProtectAccountPage } from '@/views/protect-account'
+import { FeedbackPage } from '@/views/feedback'
+import { DeliveryPartnerRegisterPage } from '@/views/delivery-partner-register'
+import { DeliveriesPage } from '@/views/deliveries'
+import { HRQueuePage } from '@/views/hr-queue'
 
 export default function Home() {
   const { user, setUser, view, authModalOpen, setAuthModalOpen } = useStore()
@@ -53,7 +64,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mx-auto" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading ABUAD Marketplace…</p>
+          <p className="mt-4 text-sm text-muted-foreground">Loading UNI MART…</p>
         </div>
       </div>
     )
@@ -77,6 +88,17 @@ export default function Home() {
         {view.name === 'admin' && <AdminPage />}
         {view.name === 'agreement' && <AgreementPage />}
         {view.name === 'setup-storefront' && <SetupStorefrontPage />}
+        {view.name === 'about' && <AboutPage />}
+        {view.name === 'campus-safety' && <CampusSafetyPage />}
+        {view.name === 'service-charge' && <ServiceChargePage />}
+        {view.name === 'sustainability' && <SustainabilityPage />}
+        {view.name === 'dispute-resolution' && <DisputeResolutionPage />}
+        {view.name === 'report-user' && <ReportUserPage />}
+        {view.name === 'protect-account' && <ProtectAccountPage />}
+        {view.name === 'feedback' && <FeedbackPage />}
+        {view.name === 'delivery-partner-register' && <DeliveryPartnerRegisterPage />}
+        {view.name === 'deliveries' && <DeliveriesPage />}
+        {view.name === 'hr-queue' && <HRQueuePage />}
       </main>
       <Footer />
       <AuthModal open={authModalOpen} onOpenChange={(o) => {

@@ -7,7 +7,7 @@ import { ProductCard } from '@/components/product-card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChevronRight, SlidersHorizontal } from 'lucide-react'
+import { ChevronRight, SlidersHorizontal, ShieldCheck, SearchX } from 'lucide-react'
 
 export function CategoryPage({ slug, name }: { slug: string; name?: string }) {
   const { setView } = useStore()
@@ -48,8 +48,8 @@ export function CategoryPage({ slug, name }: { slug: string; name?: string }) {
             <h3 className="font-bold text-sm mb-2">{category?.name || name}</h3>
             <p className="text-xs text-muted-foreground">{category?.description}</p>
             {category?.requiresApproval && (
-              <div className="mt-2 text-xs bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 p-2 rounded">
-                ⚠️ Food & drinks sold here are sold by admin-verified storefronts only.
+              <div className="mt-2 text-xs bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 p-2 rounded flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> Listings in this category are sold by admin-verified storefronts only.
               </div>
             )}
           </div>
@@ -97,10 +97,10 @@ export function CategoryPage({ slug, name }: { slug: string; name?: string }) {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-lg border">
-              <div className="text-5xl mb-2">🔍</div>
+              <SearchX className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
               <p className="font-bold">No listings in this category yet</p>
               <p className="text-sm text-muted-foreground mb-4">Be the first to sell here.</p>
-              <Button onClick={() => setView({ name: 'sell' })}>Sell on ABUAD Marketplace</Button>
+              <Button onClick={() => setView({ name: 'sell' })}>Sell on UNI MART</Button>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">

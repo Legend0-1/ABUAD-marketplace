@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     take: 100,
     include: {
       product: { include: { media: true, category: true } },
-      buyer: { select: { id: true, fullName: true, profilePicture: true, matricNumber: true, department: true } },
+      buyer: { select: { id: true, fullName: true, profilePicture: true } },
     },
   })
 

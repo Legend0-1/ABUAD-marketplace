@@ -212,7 +212,7 @@ export function SellPage() {
               <SelectContent className="max-h-72 overflow-y-auto scrollbar-thin">
                 {categories.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name} {c.requiresApproval && '⚠️ (food — needs approval)'}
+                    {c.name} {c.requiresApproval && '(needs admin approval)'}
                   </SelectItem>
                 ))}
               </SelectContent>

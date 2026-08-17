@@ -1,7 +1,7 @@
 'use client'
 
 import { useStore } from '@/lib/store'
-import { Star, MapPin, ShoppingCart, Zap } from 'lucide-react'
+import { Star, MapPin, ShoppingCart, Zap, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
@@ -63,7 +63,7 @@ export function ProductCard({ product, compact }: Props) {
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <div className="text-4xl mb-1">📦</div>
+              <Package className="w-8 h-8 mx-auto mb-1 opacity-50" />
               <p className="text-xs">No image</p>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function ProductCard({ product, compact }: Props) {
         </div>
         {product.storefront?.status === 'active' && product.category?.requiresApproval && (
           <div className="absolute top-2 right-2">
-            <Badge className="bg-green-600 text-white">Verified</Badge>
+            <Badge className="bg-verified text-verified-foreground">Verified</Badge>
           </div>
         )}
       </div>
@@ -98,7 +98,7 @@ export function ProductCard({ product, compact }: Props) {
             <span className="text-muted-foreground italic text-xs">New listing</span>
           )}
         </div>
-        <p className="text-lg font-bold text-primary mt-1">₦{product.price.toLocaleString()}</p>
+        <span className="price-tag mt-1 self-start">₦{product.price.toLocaleString()}</span>
         <p className="text-xs text-muted-foreground truncate">
           {product.storefront?.name || product.seller?.fullName || 'ABUAD seller'}
         </p>
@@ -106,7 +106,7 @@ export function ProductCard({ product, compact }: Props) {
           <Button size="sm" variant="outline" className="flex-1 h-8" onClick={onAddToCart}>
             <ShoppingCart className="w-3.5 h-3.5 mr-1" /> Cart
           </Button>
-          <Button size="sm" className="flex-1 h-8 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={onBuyNow}>
+          <Button size="sm" className="flex-1 h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" onClick={onBuyNow}>
             <Zap className="w-3.5 h-3.5 mr-1" /> Buy
           </Button>
         </div>

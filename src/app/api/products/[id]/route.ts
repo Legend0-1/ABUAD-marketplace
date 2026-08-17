@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     where: { id },
     include: {
       category: true,
-      seller: { select: { id: true, fullName: true, profilePicture: true, matricNumber: true, department: true, level: true } },
+      seller: { select: { id: true, fullName: true, profilePicture: true, department: true, level: true } },
       storefront: { select: { id: true, name: true, rating: true, status: true } },
       media: true,
       reviews: {

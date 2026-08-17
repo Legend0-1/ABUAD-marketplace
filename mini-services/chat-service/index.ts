@@ -85,7 +85,7 @@ io.on('connection', (socket) => {
   })
 })
 
-const PORT = 3003
+const PORT = Number(process.env.PORT) || 3003
 httpServer.listen(PORT, () => {
   console.log(`ABUAD chat WebSocket server running on port ${PORT}`)
 })

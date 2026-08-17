@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
+import { logAudit } from '@/lib/audit'
 
 // List all storefronts (with status filter)
 export async function GET(req: Request) {
@@ -27,8 +28,9 @@ export async function GET(req: Request) {
 
 // Approve / reject / suspend a storefront
 export async function POST(req: Request) {
+  let admin
   try {
-    await requireAdmin()
+    admin = await requireAdmin()
   } catch {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
@@ -51,8 +53,7 @@ export async function POST(req: Request) {
   })
 
   // Notify the seller via an admin_direct conversation
-  const admin = await db.user.findFirst({ where: { isAdmin: true } })
-  if (admin) {
+  {
     let conv = await db.conversation.findFirst({
       where: { type: 'admin_direct', participantAId: admin.id, participantBId: storefront.ownerId },
     })
@@ -62,16 +63,18 @@ export async function POST(req: Request) {
       })
     }
     const msg = action === 'approve'
-      ? `✅ Your storefront "${storefront.name}" has been approved. You can now list and sell food items on the platform.`
+      ? `Your storefront "${storefront.name}" has been approved. You can now list and sell on the platform.`
       : action === 'reject'
-      ? `❌ Your storefront "${storefront.name}" application has been rejected. Please contact admin for more details.`
+      ? `Your storefront "${storefront.name}" application has been rejected. Please contact admin for more details.`
       : action === 'suspend'
-      ? `⚠️ Your storefront "${storefront.name}" has been suspended. Please contact admin to resolve this.`
-      : `✅ Your storefront "${storefront.name}" has been reactivated.`
+      ? `Your storefront "${storefront.name}" has been suspended. Please contact admin to resolve this.`
+      : `Your storefront "${storefront.name}" has been reactivated.`
     await db.message.create({
       data: { conversationId: conv.id, senderId: admin.id, body: msg },
     })
   }
+
+  await logAudit({ actor: admin, action: `storefront.${action}`, targetType: 'Storefront', targetId: storefront.id, detail: `${storefront.name} → ${newStatus}` })
 
   return NextResponse.json({ storefront, message: `Storefront ${action}d` })
 }

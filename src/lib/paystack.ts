@@ -66,6 +66,18 @@ export async function verifyTransaction(reference: string) {
   return data.data as { status: string; amount: number; reference: string; paid_at: string | null }
 }
 
+/** Refunds a buyer's payment in full (or partially, if amountNaira is given). */
+export async function refundTransaction(params: { reference: string; amountNaira?: number }) {
+  const data = await paystackFetch('/refund', {
+    method: 'POST',
+    body: JSON.stringify({
+      transaction: params.reference,
+      ...(params.amountNaira ? { amount: Math.round(params.amountNaira * 100) } : {}),
+    }),
+  })
+  return data.data as { status: string; refund_reference: string }
+}
+
 // --- Payouts (platform -> seller) ---
 
 export async function resolveBankCode(bankName: string): Promise<string | null> {

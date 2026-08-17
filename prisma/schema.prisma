@@ -1,4 +1,4 @@
-// ABUAD Marketplace — Prisma schema
+// UNI MART — Prisma schema
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,11 +15,19 @@ model User {
   passwordHash    String
   fullName        String
   matricNumber    String   @unique
+  referralCode    String?  @unique // generated at account creation; backfilled for existing users on next app start
+  referredById    String?
+  referredBy      User?    @relation("Referrals", fields: [referredById], references: [id])
+  referrals       User[]   @relation("Referrals")
   level           String   // e.g. "100", "200", "300", "400", "500"
   department      String
   profilePicture  String?  // URL or base64 data URL
   isAdmin         Boolean  @default(false)
+  isHR            Boolean  @default(false) // scoped admin role: manages delivery partner queue & assignments
   isBanned        Boolean  @default(false)
+  // Two-factor authentication (TOTP)
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -36,6 +44,13 @@ model User {
   acknowledgments Acknowledgment[]
   convAsA         Conversation[] @relation("ConvParticipantA")
   convAsB         Conversation[] @relation("ConvParticipantB")
+  feedback        Feedback[]
+  auditLogs       AuditLog[]
+  deliveryPartnerProfile DeliveryPartnerProfile?
+  deliveryRequestsAsCustomer DeliveryRequest[] @relation("DeliveryCustomer")
+  deliveryMessagesSent DeliveryMessage[]
+  referralCommissionsEarned ReferralCommission[] @relation("ReferralEarnings")
+  referralCommissionsGenerated ReferralCommission[] @relation("ReferralSpending")
 }
 
 model Storefront {
@@ -260,4 +275,128 @@ model Message {
   // Admin can see all; flag indicates admin has read
   adminSeen       Boolean  @default(false)
   createdAt       DateTime @default(now())
+}
+
+// Records key platform actions for admin accountability & troubleshooting.
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorLabel  String   // denormalized name/role snapshot, survives actor deletion
+  action      String   // e.g. "order.refund", "storefront.approve", "user.ban", "agreement.update"
+  targetType  String?  // e.g. "Order", "Storefront", "User"
+  targetId    String?
+  detail      String?  // short human-readable summary, no sensitive payloads
+  createdAt   DateTime @default(now())
+}
+
+// "Give opinion on how to make the platform better" — general suggestions/feedback.
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String   // "suggestion" | "bug" | "compliment" | "other"
+  message     String
+  status      String   @default("new") // "new" | "reviewed" | "actioned" | "archived"
+  createdAt   DateTime @default(now())
+}
+
+// --- Delivery Partner + HR dispatch system ---
+//
+// Two job types with different payout timing:
+//   buy_and_deliver: partner fronts money to purchase an item for the customer.
+//     itemCost is released to the partner immediately on confirmed availability
+//     (before delivery) -- an intentional exception to the platform's usual
+//     escrow-until-acknowledgment rule, since the partner needs capital to buy
+//     the item. serviceFee still waits for customer confirmation like normal.
+//   errand_only: no purchase, no customer<->partner contact at all (per spec).
+//     Full serviceFee is held until the customer confirms completion.
+model DeliveryPartnerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  status          String   @default("pending_review") // pending_review | approved | rejected | suspended
+  videoUrl        String   // KYC video (data URL, same upload pattern as product media)
+  bankName        String
+  bankCode        String?
+  accountName     String
+  accountNumber   String
+  recipientCode   String?  // Paystack transfer recipient, created on first payout
+  baseFeeNote     String?  // partner's stated pricing/availability notes
+  trustScore      Int      @default(0)
+  // Separate, explicitly-granted gate for buy_and_deliver jobs -- general
+  // approval alone only qualifies a partner for errand_only work. HR must
+  // review the KYC video and track record before flipping this on.
+  typeAEligible   Boolean  @default(false)
+  typeAApprovedById String?
+  typeAApprovedAt DateTime?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  requests        DeliveryRequest[]
+}
+
+model DeliveryRequest {
+  id              String   @id @default(cuid())
+  reference       String   @unique
+  customerId      String
+  customer        User     @relation("DeliveryCustomer", fields: [customerId], references: [id])
+  type            String   // "buy_and_deliver" | "errand_only"
+  description     String
+  dropoffLocation String
+  itemCost        Float?   // null for errand_only
+  serviceFee      Float
+  totalPaid       Float
+  status          String   @default("pending_payment")
+  // pending_payment -> pending_hr (paid, awaiting HR assignment) -> awaiting_partner (assigned, awaiting accept/decline)
+  // -> in_progress -> completed | disputed | cancelled
+  // (buy_and_deliver additionally tracks itemCostReleasedAt mid-flow, once partner accepts)
+
+  paystackReference String? @unique
+  paidAt          DateTime?
+
+  partnerId       String?
+  partner         DeliveryPartnerProfile? @relation(fields: [partnerId], references: [id])
+  assignedById    String?  // HR user who made the assignment
+  itemCostReleasedAt DateTime?
+  itemCostTransferRef String?
+  serviceFeeReleasedAt DateTime?
+  serviceFeeTransferRef String?
+  customerConfirmedAt DateTime?
+
+  createdAt       DateTime @default(now())
+
+  messages        DeliveryMessage[]
+}
+
+model DeliveryMessage {
+  // buy_and_deliver only -- errand_only has zero customer<->partner contact per spec
+  id              String   @id @default(cuid())
+  requestId       String
+  request         DeliveryRequest @relation(fields: [requestId], references: [id])
+  senderId        String
+  sender          User     @relation(fields: [senderId], references: [id])
+  body            String
+  createdAt       DateTime @default(now())
+}
+
+// Every 5 qualifying (completed) purchases by a referred user triggers a
+// commission batch: 5% of the combined total of those 5 orders, credited to
+// the referrer. Paid out manually by admin for now (referrers-only accounts
+// don't have bank details on file the way sellers/delivery partners do) --
+// see AdminReferralManager for the "mark as paid" flow.
+model ReferralCommission {
+  id                String   @id @default(cuid())
+  referrerId        String
+  referrer          User     @relation("ReferralEarnings", fields: [referrerId], references: [id])
+  referredUserId    String
+  referredUser      User     @relation("ReferralSpending", fields: [referredUserId], references: [id])
+  qualifyingOrderIds String  // JSON array of the 5 order IDs this batch covers
+  batchTotal        Float    // combined value of the 5 qualifying orders
+  commissionAmount  Float    // 5% of batchTotal
+  status            String   @default("pending") // pending | paid | cancelled
+  paidAt            DateTime?
+  paidById          String?
+  createdAt         DateTime @default(now())
 }

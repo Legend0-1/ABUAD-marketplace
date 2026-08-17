@@ -12,6 +12,7 @@ export type SessionUser = {
   department: string
   profilePicture: string | null
   isAdmin: boolean
+  isHR?: boolean
 }
 
 export type View =
@@ -29,6 +30,17 @@ export type View =
   | { name: 'admin' }
   | { name: 'agreement' }
   | { name: 'setup-storefront' }
+  | { name: 'about' }
+  | { name: 'campus-safety' }
+  | { name: 'service-charge' }
+  | { name: 'sustainability' }
+  | { name: 'dispute-resolution' }
+  | { name: 'report-user' }
+  | { name: 'protect-account' }
+  | { name: 'feedback' }
+  | { name: 'delivery-partner-register' }
+  | { name: 'deliveries' }
+  | { name: 'hr-queue' }
 
 type CartItem = {
   productId: string

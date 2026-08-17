@@ -11,6 +11,7 @@ import { ProductCard } from '@/components/product-card'
 import { api } from '@/lib/api'
 import { Store, Package, MessageSquare, ChevronRight, ShieldCheck, Edit, Star, Flag } from 'lucide-react'
 import { toast } from 'sonner'
+import { ReferralSummaryCard } from '@/components/referral-summary-card'
 
 export function ProfilePage() {
   const { user, setView } = useStore()
@@ -77,6 +78,8 @@ export function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <ReferralSummaryCard />
 
       <div className="grid sm:grid-cols-3 gap-3 mb-4">
         <div className="bg-card border rounded-lg p-4">

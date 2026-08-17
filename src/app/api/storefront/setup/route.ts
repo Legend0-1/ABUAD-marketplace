@@ -34,11 +34,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Agreement is no longer active. Please reload and try again.' }, { status: 400 })
     }
 
-    // Determine if storefront needs admin approval (food category sellers)
-    // We default to active; food listings will trigger approval at product creation.
-    // But if the user explicitly says they only sell food, mark as pending_approval.
-    const wantsFood = (body.sellsFood === true) || /food|drink|meal|kitchen/i.test(name + ' ' + description)
-    const status = wantsFood ? 'pending_approval' : 'active'
+    // Food/drink sales are not permitted on the platform. Block storefronts
+    // that are clearly food-focused at setup, rather than silently letting
+    // them through or routing them to an approval queue that no longer applies.
+    const looksLikeFood = /\b(food|drink|meal|kitchen|snack|jollof|pastr|zobo|catering)\b/i.test(`${name} ${description}`)
+    if (looksLikeFood) {
+      return NextResponse.json({
+        error: 'Food and drink sales are not currently permitted on UNI MART. Please remove food/drink references from your storefront name and description, or choose a different category. See our Campus Safety Policy for details.',
+      }, { status: 400 })
+    }
+    const status = 'active'
 
     const [storefront] = await db.$transaction([
       db.storefront.create({

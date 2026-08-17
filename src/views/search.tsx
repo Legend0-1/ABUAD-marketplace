@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Search as SearchIcon, Store, ChevronRight, Tag } from 'lucide-react'
+import { Search as SearchIcon, SearchX, Store, ChevronRight, Tag } from 'lucide-react'
 
 export function SearchPage({ q }: { q: string }) {
   const { setView } = useStore()
@@ -98,7 +98,7 @@ export function SearchPage({ q }: { q: string }) {
       ) : (
         !loading && q && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-2">🔍</div>
+            <SearchX className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
             <p className="font-bold">No results for "{q}"</p>
             <p className="text-sm text-muted-foreground">Try different keywords or browse a category.</p>
           </div>

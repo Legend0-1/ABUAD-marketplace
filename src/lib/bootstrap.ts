@@ -1,5 +1,6 @@
 import { db } from './db'
 import { hashPassword } from './auth'
+import { backfillReferralCodes } from './referral'
 
 // Bootstrap the marketplace: admin + demo seed data for first run.
 // Idempotent — safe to call on every server start.
@@ -12,7 +13,7 @@ export async function bootstrapMarketplace() {
       data: {
         email: adminEmail,
         passwordHash: hashPassword('admin1234'),
-        fullName: 'ABUAD Marketplace Admin',
+        fullName: 'UNI MART Admin',
         matricNumber: 'ADMIN-0001',
         level: 'Staff',
         department: 'Administration',
@@ -60,6 +61,9 @@ export async function bootstrapMarketplace() {
     await seedDemoData()
   }
 
+  // 5. Backfill referral codes for any users created before the referral program existed
+  await backfillReferralCodes()
+
   return { admin }
 }
 
@@ -72,9 +76,9 @@ async function seedDemoData() {
       level: '300',
       department: 'Medicine & Surgery',
       storefront: {
-        name: "Chioma's Campus Kitchen",
-        description: 'Fresh, hygienic home-cooked meals and pastries delivered to your hostel. Vetted by ABUAD admin.',
-        type: 'services',
+        name: "Chioma's Study Corner",
+        description: 'Medical & health science textbooks, past questions, and study materials — from a 300-level Medicine student who\'s used them all.',
+        type: 'products',
         bankName: 'Access Bank',
         accountName: 'Okafor Chioma',
         accountNumber: '0123456789',
@@ -162,7 +166,6 @@ async function seedDemoData() {
   }
 
   // Get categories & sellers for products
-  const foodCat = await db.category.findUnique({ where: { slug: 'food-drinks' } })
   const phoneCat = await db.category.findUnique({ where: { slug: 'phones-gadgets' } })
   const deliveryCat = await db.category.findUnique({ where: { slug: 'delivery-services' } })
   const notesCat = await db.category.findUnique({ where: { slug: 'note-writing-assignments-projects' } })
@@ -176,7 +179,7 @@ async function seedDemoData() {
   const tunde = await db.user.findUnique({ where: { email: 'tunde.bello@abuad.edu.ng' } })
   const amina = await db.user.findUnique({ where: { email: 'amina.yusuf@abuad.edu.ng' } })
   const david = await db.user.findUnique({ where: { email: 'david.adebayo@abuad.edu.ng' } })
-  if (!chioma || !tunde || !amina || !david || !foodCat || !phoneCat || !deliveryCat || !notesCat || !clothesCat || !laundryCat || !printingCat || !shoesCat || !booksCat) return
+  if (!chioma || !tunde || !amina || !david || !phoneCat || !deliveryCat || !notesCat || !clothesCat || !laundryCat || !printingCat || !shoesCat || !booksCat) return
 
   const chiomaStore = (await db.storefront.findUnique({ where: { ownerId: chioma.id } }))!
   const tundeStore = (await db.storefront.findUnique({ where: { ownerId: tunde.id } }))!
@@ -185,10 +188,10 @@ async function seedDemoData() {
 
   // Demo products
   const products = [
-    // Food (Chioma)
-    { title: 'Jollof Rice & Chicken ( takeaway pack )', description: 'Hot, hygienic jollof rice with grilled chicken. Prepared fresh daily. Order before 12pm for same-day delivery.', price: 1500, kind: 'product', categoryId: foodCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 20, condition: 'new' },
-    { title: 'Meat Pie (per piece)', description: 'Freshly baked meat pies with seasoned minced beef and vegetables. Sold per piece.', price: 400, kind: 'product', categoryId: foodCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 30, condition: 'new' },
-    { title: 'Zobo Drink (1 litre)', description: 'Chilled homemade zobo with pineapple & ginger. 1-litre bottle, perfect for sharing.', price: 600, kind: 'product', categoryId: foodCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 15, condition: 'new' },
+    // Study materials (Chioma)
+    { title: 'Guyton & Hall Physiology (13th ed, fairly used)', description: 'Guyton & Hall Textbook of Medical Physiology, 13th edition. All pages intact, no markings.', price: 12000, kind: 'product', categoryId: booksCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 1, condition: 'fairly_used' },
+    { title: 'MBBS 300L Past Questions Bundle', description: 'Compiled past questions and answers for 300-level Medicine & Surgery courses, organized by course code.', price: 2500, kind: 'product', categoryId: booksCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 99, condition: 'new' },
+    { title: 'Anatomy Atlas (Netter, fairly used)', description: 'Netter\'s Atlas of Human Anatomy, good condition, some highlighter marks in early chapters only.', price: 15000, kind: 'product', categoryId: booksCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 1, condition: 'fairly_used' },
 
     // Phones (Tunde)
     { title: 'iPhone 11 (128GB, Fairly Used)', description: 'Clean iPhone 11, 128GB, battery health 87%, no cracks. Comes with charger and case.', price: 180000, kind: 'product', categoryId: phoneCat.id, sellerId: tunde.id, storefrontId: tundeStore.id, stock: 1, condition: 'fairly_used' },
@@ -206,9 +209,6 @@ async function seedDemoData() {
     { title: 'Assignment Typing (up to 10 pages)', description: 'Professional assignment typing with proper formatting and references. Up to 10 pages, 24-hour turnaround.', price: 2000, kind: 'service', categoryId: notesCat.id, sellerId: david.id, storefrontId: davidStore.id, stock: 99, condition: null },
     { title: 'Final Year Project Research Assistance', description: 'Help with literature review, methodology writeup, and data analysis for your final year project. Per chapter.', price: 8000, kind: 'service', categoryId: notesCat.id, sellerId: david.id, storefrontId: davidStore.id, stock: 5, condition: null },
 
-    // More food from Chioma (so category feels rich)
-    { title: 'Pounded Yam & Egusi Soup', description: 'Authentic Nigerian pounded yam with rich egusi soup and assorted meat. Takeaway pack.', price: 1800, kind: 'product', categoryId: foodCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 10, condition: 'new' },
-
     // Clothes
     { title: 'Ankara 2-piece Set (Size M)', description: 'Beautifully sewn Ankara 2-piece set, size M, perfect for campus events. Brand new.', price: 7500, kind: 'product', categoryId: clothesCat.id, sellerId: tunde.id, storefrontId: tundeStore.id, stock: 3, condition: 'new' },
     { title: 'Ironing Service (per 10 items)', description: 'Professional ironing service, 10 items for one flat price. Pickup & delivery available.', price: 1200, kind: 'service', categoryId: laundryCat.id, sellerId: amina.id, storefrontId: aminaStore.id, stock: 99, condition: null },
@@ -218,9 +218,6 @@ async function seedDemoData() {
 
     // Shoes
     { title: 'Shoe Repair — Resole (any leather shoe)', description: 'Professional resole service for leather shoes. Adds months of life. 48-hour turnaround.', price: 2500, kind: 'service', categoryId: shoesCat.id, sellerId: tunde.id, storefrontId: tundeStore.id, stock: 99, condition: null },
-
-    // Books
-    { title: 'Medical Physiology Textbook (Guyton, 13th ed)', description: 'Guyton & Hall Textbook of Medical Physiology, 13th edition. Fairly used, all pages intact, no markings.', price: 12000, kind: 'product', categoryId: booksCat.id, sellerId: chioma.id, storefrontId: chiomaStore.id, stock: 1, condition: 'fairly_used' },
   ]
 
   for (const p of products) {
@@ -228,13 +225,13 @@ async function seedDemoData() {
   }
 
   // A couple of demo reviews
-  const chiomaJollof = await db.product.findFirst({ where: { title: { contains: 'Jollof Rice' } } })
+  const chiomaPhysiology = await db.product.findFirst({ where: { title: { contains: 'Guyton & Hall' } } })
   const tundeIphone = await db.product.findFirst({ where: { title: { contains: 'iPhone 11' } } })
-  if (chiomaJollof && amina) {
+  if (chiomaPhysiology && amina) {
     await db.review.create({
-      data: { productId: chiomaJollof.id, userId: amina.id, rating: 5, comment: 'Best jollof on campus! Hot, tasty and delivered on time.' },
+      data: { productId: chiomaPhysiology.id, userId: amina.id, rating: 5, comment: 'Book was exactly as described, no missing pages. Saved me so much buying it used.' },
     })
-    await db.product.update({ where: { id: chiomaJollof.id }, data: { rating: 5, reviewCount: 1 } })
+    await db.product.update({ where: { id: chiomaPhysiology.id }, data: { rating: 5, reviewCount: 1 } })
   }
   if (tundeIphone && david) {
     await db.review.create({

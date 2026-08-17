@@ -41,7 +41,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [mode, setMode] = useState<'register' | 'login'>(authMode)
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState({
-    email: '', password: '', fullName: '', matricNumber: '', level: '', department: '', profilePicture: '' as string,
+    email: '', password: '', fullName: '', matricNumber: '', level: '', department: '', profilePicture: '' as string, referralCode: '',
   })
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -66,6 +66,10 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error('All fields are required')
       return
     }
+    if (!form.referralCode.trim()) {
+      toast.error('A referral code from an existing UNI MART student is required to join')
+      return
+    }
     if (form.password.length < 6) {
       toast.error('Password must be at least 6 characters')
       return
@@ -78,10 +82,13 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       return
     }
     setUser(data.user)
-    storeToast({ title: `Welcome, ${data.user.fullName.split(' ')[0]}!`, description: 'Your ABUAD Marketplace account is ready.', variant: 'success' })
+    storeToast({ title: `Welcome, ${data.user.fullName.split(' ')[0]}!`, description: 'Your UNI MART account is ready.', variant: 'success' })
     onOpenChange(false)
     setView({ name: 'home' })
   }
+
+  const [twoFactorPending, setTwoFactorPending] = useState<string | null>(null)
+  const [twoFactorCode, setTwoFactorCode] = useState('')
 
   const submitLogin = async () => {
     if (!form.email || !form.password) {
@@ -95,6 +102,25 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error('Login failed', { description: error })
       return
     }
+    if (data.requiresTwoFactor) {
+      setTwoFactorPending(data.pendingToken)
+      return
+    }
+    setUser(data.user)
+    storeToast({ title: `Welcome back, ${data.user.fullName.split(' ')[0]}!`, variant: 'success' })
+    onOpenChange(false)
+    setView({ name: 'home' })
+  }
+
+  const submitTwoFactor = async () => {
+    if (!twoFactorPending) return
+    setBusy(true)
+    const { data, error } = await api('/api/auth/2fa/verify-login', { method: 'POST', body: { pendingToken: twoFactorPending, code: twoFactorCode } })
+    setBusy(false)
+    if (error) {
+      toast.error('Verification failed', { description: error })
+      return
+    }
     setUser(data.user)
     storeToast({ title: `Welcome back, ${data.user.fullName.split(' ')[0]}!`, variant: 'success' })
     onOpenChange(false)
@@ -106,11 +132,9 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto scrollbar-thin">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-black text-2xl">
-              A
-            </div>
+            <img src="/logo.png" alt="UNI MART" className="w-12 h-12 object-contain" />
             <div>
-              <DialogTitle className="text-xl">Welcome to ABUAD Marketplace</DialogTitle>
+              <DialogTitle className="text-xl">Welcome to UNI MART</DialogTitle>
               <DialogDescription className="text-sm">
                 A safe, verified marketplace for Afe Babalola University students only.
               </DialogDescription>
@@ -171,6 +195,11 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                 <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
                 <Input id="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" />
               </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="referralCode">Referral Code <span className="text-destructive">*</span></Label>
+                <Input id="referralCode" value={form.referralCode} onChange={(e) => setForm({ ...form, referralCode: e.target.value.toUpperCase() })} placeholder="e.g. UM-A7X9K2" />
+                <p className="text-[11px] text-muted-foreground mt-1">Ask a friend already on UNI MART for their code — find it on their Profile page.</p>
+              </div>
             </div>
 
             <div>
@@ -217,6 +246,34 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           </TabsContent>
 
           <TabsContent value="login" className="space-y-3 mt-4">
+            {twoFactorPending ? (
+              <div className="space-y-3">
+                <div className="text-center space-y-1">
+                  <ShieldCheck className="w-8 h-8 mx-auto text-primary" />
+                  <p className="font-bold">Two-factor verification</p>
+                  <p className="text-xs text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+                </div>
+                <Input
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="text-center text-lg tracking-[0.5em] font-mono"
+                  maxLength={6}
+                  inputMode="numeric"
+                  autoFocus
+                />
+                <Button onClick={submitTwoFactor} disabled={busy || twoFactorCode.length !== 6} className="w-full" size="lg">
+                  {busy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verifying…</> : 'Verify & Sign In'}
+                </Button>
+                <button
+                  onClick={() => { setTwoFactorPending(null); setTwoFactorCode('') }}
+                  className="text-xs text-center w-full text-muted-foreground hover:text-primary"
+                >
+                  ← Back to sign in
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="space-y-3">
               <div>
                 <Label htmlFor="loginEmail">Email</Label>
@@ -239,6 +296,8 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               New here?{' '}
               <button onClick={() => setMode('register')} className="text-primary font-medium hover:underline">Create an account</button>
             </p>
+            </>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>

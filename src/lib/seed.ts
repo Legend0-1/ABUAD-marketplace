@@ -20,14 +20,6 @@ export const DEFAULT_CATEGORIES = [
     requiresApproval: false,
   },
   {
-    name: 'Food & Drinks',
-    slug: 'food-drinks',
-    description: 'Home-cooked meals, snacks, pastries and drinks. Every food storefront is verified & approved by the admin to prevent food/drink poisoning.',
-    icon: 'UtensilsCrossed',
-    origin: 'default',
-    requiresApproval: true,
-  },
-  {
     name: 'Clothes & Fashion',
     slug: 'clothes-fashion',
     description: 'New and fairly used clothing, traditional wear, accessories and campus fashion.',
@@ -102,16 +94,16 @@ export const DEFAULT_CATEGORIES = [
 ] as const
 
 export const DEFAULT_AGREEMENT = {
-  version: '1.0',
-  title: 'ABUAD Marketplace Seller Agreement',
+  version: '1.1',
+  title: 'UNI MART Seller Agreement',
   serviceChargePercent: 20,
-  body: `# ABUAD Marketplace Seller Agreement (v1.0)
+  body: `# UNI MART Seller Agreement (v1.1)
 
 **Effective Date:** Upon signing
-**Between:** The Seller (you) and ABUAD Marketplace ("the Platform")
+**Between:** The Seller (you) and UNI MART ("the Platform")
 
 ## 1. Purpose of the Platform
-ABUAD Marketplace is a peer-to-peer commerce platform restricted to verified ABUAD students. It exists to make campus life easier by connecting student sellers with student buyers in a safe, accountable environment.
+UNI MART is a peer-to-peer commerce platform restricted to verified ABUAD students. It exists to make campus life easier by connecting student sellers with student buyers in a safe, accountable environment.
 
 ## 2. Service Charge
 In consideration for hosting your storefront, processing transactions, providing escrow protection, dispute resolution, and the messaging infrastructure, the Platform charges a **20% service fee** on the net profit of every successful transaction. Net profit is defined as the total amount paid by the buyer minus any Platform-processed refunds. The 20% service fee is deducted before the seller's payout is initiated.
@@ -120,19 +112,18 @@ In consideration for hosting your storefront, processing transactions, providing
 The remaining 80% of every successfully completed transaction will be remitted to the bank account you provide during storefront setup. Payouts are triggered only after the buyer has formally acknowledged receipt of the good or service. Payout timelines are subject to your bank's processing schedule.
 
 ## 4. Buyer Acknowledgement & Refunds
-To protect both parties, no payout is released to the seller until the buyer clicks **"Acknowledge Receipt"** on the order. If the buyer disputes receipt (e.g., goods not delivered, wrong item, spoiled food), the Platform will hold the funds and mediate. Refunds may be issued in whole or in part based on the admin's review. Sellers who repeatedly fail to deliver will be suspended.
+To protect both parties, no payout is released to the seller until the buyer clicks **"Acknowledge Receipt"** on the order. If the buyer disputes receipt (e.g., goods not delivered, wrong item, item significantly not as described), the Platform will hold the funds and mediate. Refunds may be issued in whole or in part based on the admin's review. Sellers who repeatedly fail to deliver will be suspended.
 
-## 5. Food & Drink Category
-If you sell any food, drink, or consumable item, your storefront must be individually approved by the Platform admin **before** any listing goes live. This is to prevent food or drink poisoning incidents. Selling food without approval is a serious violation and will result in immediate suspension and possible referral to the university authorities.
+## 5. Prohibited Items & Services
+You may not list: food or drink of any kind (not currently permitted on the Platform), alcohol sales to minors, drugs, weapons, stolen goods, or academic malpractice materials (e.g. exam answers, or complete assignments/projects written for someone to submit as their own work). See the Campus Safety Policy for the full, current list — it may be updated from time to time as new risks are identified.
 
 ## 6. Accountabilities
 - You may only create one storefront per verified ABUAD account.
-- You may not list prohibited items (alcohol to minors, drugs, weapons, stolen goods, exam malpractice materials).
 - You must respond to buyer messages within a reasonable time.
 - Reviews, comments and reports are part of the Platform; retaliating against a buyer for leaving a negative review is prohibited.
 
-## 7. Admin Oversight of Messages
-The Platform admin can read all messages sent through the inbox system. This is a safety measure against fraud, harassment, and prohibited transactions. Users will not be notified when admin reads their messages. The admin can also send direct or broadcast messages to any user.
+## 7. Safety Review of Messages
+The admin team has the ability to review messages sent through the platform's inbox system, as part of keeping the marketplace safe from fraud, harassment, and prohibited transactions — most actively when responding to a report or dispute. The admin can also send direct or broadcast messages to any user for important platform announcements.
 
 ## 8. Auto-Categorisation
 The Platform will automatically create new categories when 2 or more sellers list the same product or service type. This is to help buyers find similar offerings. Sellers cannot opt out of auto-categorisation.
@@ -150,10 +141,10 @@ The Platform is a facilitator and is not a party to the contract of sale between
 By clicking **"I have read and agree to the Seller Agreement"**, you confirm that:
 - You have read this agreement in full
 - You understand the 20% service charge and the buyer-acknowledgement payout rule
-- You consent to admin oversight of your inbox messages
+- You consent to the admin's ability to review inbox messages as described above
 - You agree to be bound by all the terms above
 
-Welcome to ABUAD Marketplace. Trade safely, trade fairly.`,
+Welcome to UNI MART. Trade safely, trade fairly.`,
 }
 
 export async function seedDefaults() {
@@ -199,7 +190,7 @@ export async function seedDefaults() {
       data: {
         email: adminEmail,
         passwordHash: hashPassword('admin1234'),
-        fullName: 'ABUAD Marketplace Admin',
+        fullName: 'UNI MART Admin',
         matricNumber: 'ADMIN-0001',
         level: 'Staff',
         department: 'Administration',
