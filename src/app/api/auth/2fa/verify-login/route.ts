@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
         profilePicture: user.profilePicture,
         isAdmin: user.isAdmin,
         isHR: user.isHR,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
         twoFactorEnabled: user.twoFactorEnabled,
       },
     })

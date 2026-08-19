@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { verifyPassword, createSessionToken, createPendingTwoFactorToken } from '@/lib/auth'
+import { verifyPassword, createSessionToken, createPendingTwoFactorToken, needsRehash, hashPassword } from '@/lib/auth'
 import { logAudit } from '@/lib/audit'
 
 export async function POST(req: NextRequest) {
@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
     }
     if (user.isBanned) {
       return NextResponse.json({ error: 'Your account has been suspended. Contact the admin.' }, { status: 403 })
+    }
+
+    // Silently upgrade legacy (pre-bcrypt) password hashes now that we know
+    // the plaintext password was correct. No user-facing change -- just
+    // strengthens what's stored, without forcing a password reset.
+    if (needsRehash(user.passwordHash)) {
+      await db.user.update({ where: { id: user.id }, data: { passwordHash: hashPassword(password) } })
     }
 
     if (user.twoFactorEnabled) {
@@ -37,6 +44,8 @@ export async function POST(req: NextRequest) {
         profilePicture: user.profilePicture,
         isAdmin: user.isAdmin,
         isHR: user.isHR,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
         twoFactorEnabled: user.twoFactorEnabled,
       },
     })

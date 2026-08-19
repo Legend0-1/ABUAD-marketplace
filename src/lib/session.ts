@@ -14,6 +14,8 @@ export type SessionUser = {
   isBanned: boolean
   isHR: boolean
   referralCode: string | null
+  phone: string | null
+  emailVerified: boolean
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -38,6 +40,8 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
         twoFactorEnabled: true,
         isHR: true,
         referralCode: true,
+        phone: true,
+        emailVerified: true,
       },
     })
     if (!user) return null

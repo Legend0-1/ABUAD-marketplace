@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, createSessionToken } from '@/lib/auth'
+import { hashPassword, createSessionToken, createEmailVerificationToken } from '@/lib/auth'
 import { bootstrapMarketplace } from '@/lib/bootstrap'
 import { generateUniqueReferralCode } from '@/lib/referral'
+import { sendVerificationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,10 +11,13 @@ export async function POST(req: NextRequest) {
     await bootstrapMarketplace()
 
     const body = await req.json()
-    const { email, password, fullName, matricNumber, level, department, profilePicture, referralCode } = body
+    const { email, password, fullName, matricNumber, level, department, profilePicture, referralCode, phone } = body
 
-    if (!email || !password || !fullName || !matricNumber || !level || !department) {
+    if (!email || !password || !fullName || !matricNumber || !level || !department || !phone) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
+    }
+    if (!/^[\d+\s()-]{7,20}$/.test(String(phone).trim())) {
+      return NextResponse.json({ error: 'Enter a valid WhatsApp number' }, { status: 400 })
     }
     if (!referralCode?.trim()) {
       return NextResponse.json({ error: 'A referral code is required to join UNI MART' }, { status: 400 })
@@ -40,12 +44,18 @@ export async function POST(req: NextRequest) {
         fullName,
         matricNumber: matricNumber.toUpperCase(),
         level,
-        department,
+        department: department.trim(),
+        phone: String(phone).trim(),
         profilePicture: profilePicture || null,
         referralCode: newReferralCode,
         referredById: referrer.id,
       },
     })
+
+    const verifyToken = createEmailVerificationToken(user.id, user.email)
+    await sendVerificationEmail({ email: user.email, fullName: user.fullName, token: verifyToken }).catch((e) =>
+      console.error('verification email failed', e)
+    )
 
     const token = createSessionToken(user.id)
     const res = NextResponse.json({
@@ -59,6 +69,8 @@ export async function POST(req: NextRequest) {
         profilePicture: user.profilePicture,
         isAdmin: user.isAdmin,
         isHR: user.isHR,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
       },
     })
     res.cookies.set('abuad_session', token, {

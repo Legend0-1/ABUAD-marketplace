@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   const order = await db.order.findUnique({ where: { id: orderId } })
   if (!order || !order.paystackReference) {
-    return NextResponse.redirect(`${appUrl}/orders?payment=error`)
+    return NextResponse.redirect(`${appUrl}/?view=orders&payment=error`)
   }
 
   try {
@@ -28,5 +28,5 @@ export async function GET(req: NextRequest) {
     console.error('verify callback error', e)
   }
 
-  return NextResponse.redirect(`${appUrl}/orders?payment=complete&orderId=${orderId}`)
+  return NextResponse.redirect(`${appUrl}/?view=orders&payment=complete&orderId=${orderId}`)
 }

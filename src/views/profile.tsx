@@ -12,6 +12,7 @@ import { api } from '@/lib/api'
 import { Store, Package, MessageSquare, ChevronRight, ShieldCheck, Edit, Star, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 import { ReferralSummaryCard } from '@/components/referral-summary-card'
+import { EmailVerificationBanner } from '@/components/email-verification-banner'
 
 export function ProfilePage() {
   const { user, setView } = useStore()
@@ -41,6 +42,8 @@ export function ProfilePage() {
         <span className="text-foreground font-medium">Your Profile</span>
       </div>
 
+      <EmailVerificationBanner />
+
       <div className="bg-card border rounded-lg overflow-hidden mb-4">
         <div className="amazon-accent-bar h-2" />
         <div className="p-4 sm:p-6">
@@ -57,6 +60,7 @@ export function ProfilePage() {
               <div className="grid sm:grid-cols-2 gap-1 text-sm text-muted-foreground">
                 <p>Matric: <span className="font-medium text-foreground">{user.matricNumber}</span></p>
                 <p>Email: <span className="font-medium text-foreground">{user.email}</span></p>
+                <p>WhatsApp: <span className="font-medium text-foreground">{(user as any).phone || '—'}</span></p>
                 <p>Department: <span className="font-medium text-foreground">{user.department}</span></p>
                 <p>Level: <span className="font-medium text-foreground">{user.level}</span></p>
               </div>

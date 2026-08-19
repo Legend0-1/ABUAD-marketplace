@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const request = await db.deliveryRequest.findUnique({ where: { id } })
   if (!request || !request.paystackReference) {
-    return NextResponse.redirect(`${appUrl}/deliveries?payment=error`)
+    return NextResponse.redirect(`${appUrl}/?view=deliveries&payment=error`)
   }
 
   try {

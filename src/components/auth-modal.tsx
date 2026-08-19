@@ -15,24 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Shield, ShieldCheck, Upload, X, GraduationCap, AlertCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-const DEPARTMENTS = [
-  'Medicine & Surgery',
-  'Law',
-  'Engineering',
-  'Computer Science',
-  'Sciences',
-  'Social Sciences',
-  'Arts & Humanities',
-  'Business Administration',
-  'Nursing Sciences',
-  'Medical Laboratory Science',
-  'Pharmacy',
-  'Agricultural Science',
-  'Education',
-  'Architecture',
-  'Estate Management',
-  'Quantity Surveying',
-]
 
 const LEVELS = ['100', '200', '300', '400', '500', '600']
 
@@ -41,7 +23,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [mode, setMode] = useState<'register' | 'login'>(authMode)
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState({
-    email: '', password: '', fullName: '', matricNumber: '', level: '', department: '', profilePicture: '' as string, referralCode: '',
+    email: '', password: '', fullName: '', matricNumber: '', level: '', department: '', profilePicture: '' as string, referralCode: '', phone: '',
   })
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -62,8 +44,12 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   }
 
   const submitRegister = async () => {
-    if (!form.email || !form.password || !form.fullName || !form.matricNumber || !form.level || !form.department) {
+    if (!form.email || !form.password || !form.fullName || !form.matricNumber || !form.level || !form.department || !form.phone) {
       toast.error('All fields are required')
+      return
+    }
+    if (!/^[\d+\s()-]{7,20}$/.test(form.phone.trim())) {
+      toast.error('Enter a valid WhatsApp number')
       return
     }
     if (!form.referralCode.trim()) {
@@ -75,7 +61,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       return
     }
     setBusy(true)
-    const { data, error } = await api('/api/auth/register', { method: 'POST', body: form })
+    const { data, error } = await api('/api/auth/register', { method: 'POST', body: { ...form, department: form.department.trim() } })
     setBusy(false)
     if (error) {
       toast.error('Registration failed', { description: error })
@@ -89,6 +75,18 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   const [twoFactorPending, setTwoFactorPending] = useState<string | null>(null)
   const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSent, setForgotSent] = useState(false)
+
+  const submitForgotPassword = async () => {
+    if (!forgotEmail.trim()) { toast.error('Enter your email'); return }
+    setBusy(true)
+    const { error } = await api('/api/auth/forgot-password', { method: 'POST', body: { email: forgotEmail.trim() } })
+    setBusy(false)
+    if (error) { toast.error(error); return }
+    setForgotSent(true)
+  }
 
   const submitLogin = async () => {
     if (!form.email || !form.password) {
@@ -180,16 +178,15 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               </div>
               <div>
                 <Label htmlFor="dept">Department <span className="text-destructive">*</span></Label>
-                <Select value={form.department} onValueChange={(v) => setForm({ ...form, department: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
-                  <SelectContent className="max-h-72 overflow-y-auto scrollbar-thin">
-                    {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Input id="dept" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="e.g. Computer Science" />
               </div>
               <div>
-                <Label htmlFor="email">ABUAD Email <span className="text-destructive">*</span></Label>
-                <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="chioma.okafor@abuad.edu.ng" />
+                <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
+                <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" />
+              </div>
+              <div>
+                <Label htmlFor="phone">WhatsApp Number <span className="text-destructive">*</span></Label>
+                <Input id="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="080XXXXXXXX" />
               </div>
               <div>
                 <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
@@ -246,7 +243,34 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           </TabsContent>
 
           <TabsContent value="login" className="space-y-3 mt-4">
-            {twoFactorPending ? (
+            {forgotPasswordMode ? (
+              forgotSent ? (
+                <div className="text-center space-y-2 py-2">
+                  <p className="font-bold">Check your email</p>
+                  <p className="text-xs text-muted-foreground">If an account exists with that email, a reset link is on its way — it expires in 30 minutes.</p>
+                  <button
+                    onClick={() => { setForgotPasswordMode(false); setForgotSent(false); setForgotEmail('') }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    ← Back to sign in
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-center space-y-1">
+                    <p className="font-bold">Reset your password</p>
+                    <p className="text-xs text-muted-foreground">Enter your account email and we'll send you a reset link.</p>
+                  </div>
+                  <Input type="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="you@example.com" autoFocus />
+                  <Button onClick={submitForgotPassword} disabled={busy} className="w-full" size="lg">
+                    {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Send Reset Link
+                  </Button>
+                  <button onClick={() => setForgotPasswordMode(false)} className="text-xs text-center w-full text-muted-foreground hover:text-primary">
+                    ← Back to sign in
+                  </button>
+                </div>
+              )
+            ) : twoFactorPending ? (
               <div className="space-y-3">
                 <div className="text-center space-y-1">
                   <ShieldCheck className="w-8 h-8 mx-auto text-primary" />
@@ -282,6 +306,13 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               <div>
                 <Label htmlFor="loginPassword">Password</Label>
                 <Input id="loginPassword" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Your password" />
+                <button
+                  type="button"
+                  onClick={() => { setForgotPasswordMode(true); setForgotEmail(form.email) }}
+                  className="text-xs text-primary hover:underline mt-1"
+                >
+                  Forgot password?
+                </button>
               </div>
             </div>
             <Button onClick={submitLogin} disabled={busy} className="w-full" size="lg">

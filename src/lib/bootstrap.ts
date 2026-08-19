@@ -64,6 +64,19 @@ export async function bootstrapMarketplace() {
   // 5. Backfill referral codes for any users created before the referral program existed
   await backfillReferralCodes()
 
+  // 6. One-time backfill: existing users predate email verification, so treat
+  // them as already verified rather than suddenly locking them out of a
+  // requirement that didn't exist when they joined. Detected by "has anyone
+  // ever been marked verified yet" -- if not, this is the first run since the
+  // feature shipped, so backfill everyone present right now (admin included).
+  // Any registration after this point is a genuinely new, unverified user,
+  // and won't be caught by this check on later calls since the admin above
+  // is already verified by then.
+  const anyoneVerified = await db.user.findFirst({ where: { emailVerified: true } })
+  if (!anyoneVerified) {
+    await db.user.updateMany({ data: { emailVerified: true } })
+  }
+
   return { admin }
 }
 

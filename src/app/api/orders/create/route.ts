@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
+import { sendNewOrderEmail } from '@/lib/email'
+import { sendNewOrderSms } from '@/lib/sms'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const product = await db.product.findUnique({
       where: { id: productId },
-      include: { storefront: true },
+      include: { storefront: true, seller: { select: { fullName: true, email: true, phone: true } } },
     })
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     if (product.status !== 'active') return NextResponse.json({ error: 'This listing is not available' }, { status: 400 })
@@ -76,6 +78,28 @@ export async function POST(req: NextRequest) {
         body: `Hi! I just placed order ${reference} for "${product.title}" (₦${totalAmount.toLocaleString()}). ${deliveryNotes ? 'Notes: ' + deliveryNotes : ''} Please confirm availability and let me know the delivery details. Thanks!`,
       },
     })
+
+    // Notify the seller by email -- awaited so it actually completes before
+    // this serverless function's execution ends, but failures never block
+    // order creation itself (the order above is already committed).
+    await sendNewOrderEmail({
+      sellerEmail: product.seller.email,
+      sellerName: product.seller.fullName,
+      buyerName: user.fullName,
+      productTitle: product.title,
+      quantity,
+      totalAmount,
+      reference,
+    }).catch((e) => console.error('new order email failed', e))
+
+    if (product.seller.phone) {
+      await sendNewOrderSms({
+        sellerPhone: product.seller.phone,
+        buyerName: user.fullName,
+        productTitle: product.title,
+        totalAmount,
+      }).catch((e) => console.error('new order sms failed', e))
+    }
 
     return NextResponse.json({ order, conversationId: conv.id })
   } catch (e: any) {

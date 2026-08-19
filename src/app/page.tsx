@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
+import { toast } from 'sonner'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { AuthModal } from '@/components/auth-modal'
@@ -33,9 +34,10 @@ import { FeedbackPage } from '@/views/feedback'
 import { DeliveryPartnerRegisterPage } from '@/views/delivery-partner-register'
 import { DeliveriesPage } from '@/views/deliveries'
 import { HRQueuePage } from '@/views/hr-queue'
+import { ResetPasswordPage } from '@/views/reset-password'
 
 export default function Home() {
-  const { user, setUser, view, authModalOpen, setAuthModalOpen } = useStore()
+  const { user, setUser, view, setView, authModalOpen, setAuthModalOpen } = useStore()
   const [bootstrapping, setBootstrapping] = useState(true)
 
   // Bootstrap session on first load
@@ -46,6 +48,44 @@ export default function Home() {
       setBootstrapping(false)
     })()
   }, [setUser])
+
+  // Server-side redirects (Paystack callbacks, email links) land here as
+  // plain query params, since this is a single-page client-routed app with
+  // no real per-view URLs. Translate `?view=orders` etc. into the actual
+  // client-side view on first load, then clean the URL so it doesn't linger.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const requestedView = params.get('view')
+
+    if (requestedView === 'reset-password') {
+      const token = params.get('token')
+      if (token) setView({ name: 'reset-password', token } as any)
+      window.history.replaceState({}, '', window.location.pathname)
+      return
+    }
+
+    const emailVerify = params.get('emailVerify')
+    if (emailVerify === 'success') {
+      toast.success('Email verified!')
+    } else if (emailVerify === 'error') {
+      toast.error('That verification link is invalid or expired.')
+    }
+
+    if (!requestedView) {
+      if (emailVerify) window.history.replaceState({}, '', window.location.pathname)
+      return
+    }
+
+    const validViews = new Set([
+      'orders', 'deliveries', 'inbox', 'profile', 'sell', 'storefront', 'admin', 'hr-queue', 'feedback',
+    ])
+    if (validViews.has(requestedView)) {
+      setView({ name: requestedView } as any)
+    }
+    // Strip the query string so refreshing doesn't keep re-triggering this.
+    window.history.replaceState({}, '', window.location.pathname)
+  }, [setView])
 
   // For first-time visitors who are not logged in, show the auth modal automatically
   useEffect(() => {
@@ -99,6 +139,7 @@ export default function Home() {
         {view.name === 'delivery-partner-register' && <DeliveryPartnerRegisterPage />}
         {view.name === 'deliveries' && <DeliveriesPage />}
         {view.name === 'hr-queue' && <HRQueuePage />}
+        {view.name === 'reset-password' && <ResetPasswordPage token={view.token} />}
       </main>
       <Footer />
       <AuthModal open={authModalOpen} onOpenChange={(o) => {
