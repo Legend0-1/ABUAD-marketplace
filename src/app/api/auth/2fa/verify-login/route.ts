@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
         twoFactorEnabled: user.twoFactorEnabled,
       },
     })
-    res.cookies.set('abuad_session', token, {
+    res.cookies.set('unimart_session', token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })

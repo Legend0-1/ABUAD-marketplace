@@ -1,6 +1,6 @@
 import { db } from './db'
 
-// Default categories required by the ABUAD marketplace spec.
+// Default categories required by the UNI MART platform spec.
 // Food requires admin approval per storefront to prevent poisoning.
 export const DEFAULT_CATEGORIES = [
   {
@@ -94,16 +94,16 @@ export const DEFAULT_CATEGORIES = [
 ] as const
 
 export const DEFAULT_AGREEMENT = {
-  version: '1.1',
+  version: '1.2',
   title: 'UNI MART Seller Agreement',
   serviceChargePercent: 20,
-  body: `# UNI MART Seller Agreement (v1.1)
+  body: `# UNI MART Seller Agreement (v1.2)
 
 **Effective Date:** Upon signing
 **Between:** The Seller (you) and UNI MART ("the Platform")
 
 ## 1. Purpose of the Platform
-UNI MART is a peer-to-peer commerce platform restricted to verified ABUAD students. It exists to make campus life easier by connecting student sellers with student buyers in a safe, accountable environment.
+UNI MART is a peer-to-peer commerce platform restricted to verified university students. It exists to make campus life easier by connecting student sellers with student buyers in a safe, accountable environment.
 
 ## 2. Service Charge
 In consideration for hosting your storefront, processing transactions, providing escrow protection, dispute resolution, and the messaging infrastructure, the Platform charges a **20% service fee** on the net profit of every successful transaction. Net profit is defined as the total amount paid by the buyer minus any Platform-processed refunds. The 20% service fee is deducted before the seller's payout is initiated.
@@ -118,7 +118,7 @@ To protect both parties, no payout is released to the seller until the buyer cli
 You may not list: food or drink of any kind (not currently permitted on the Platform), alcohol sales to minors, drugs, weapons, stolen goods, or academic malpractice materials (e.g. exam answers, or complete assignments/projects written for someone to submit as their own work). See the Campus Safety Policy for the full, current list — it may be updated from time to time as new risks are identified.
 
 ## 6. Accountabilities
-- You may only create one storefront per verified ABUAD account.
+- You may only create one storefront per verified account.
 - You must respond to buyer messages within a reasonable time.
 - Reviews, comments and reports are part of the Platform; retaliating against a buyer for leaving a negative review is prohibited.
 
@@ -182,7 +182,7 @@ export async function seedDefaults() {
   }
 
   // Admin user (default)
-  const adminEmail = 'admin@abuad.marketplace'
+  const adminEmail = 'admin@unimart.ng'
   const existingAdmin = await db.user.findUnique({ where: { email: adminEmail } })
   if (!existingAdmin) {
     const { hashPassword } = await import('./auth')

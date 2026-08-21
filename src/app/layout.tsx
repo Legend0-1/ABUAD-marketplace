@@ -23,8 +23,8 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "UNI MART — Campus Commerce, Reimagined",
-  description: "Verified ABUAD student-only marketplace. Buy and sell food, gadgets, clothes, services and more on a safe, moderated platform.",
-  keywords: ["ABUAD", "marketplace", "students", "ecommerce", "Nigeria", "Afe Babalola University"],
+  description: "Verified university student-only marketplace. Buy and sell gadgets, clothes, services and more on a safe, moderated platform.",
+  keywords: ["marketplace", "students", "ecommerce", "Nigeria", "campus"],
   authors: [{ name: "UNI MART" }],
   manifest: "/manifest.webmanifest",
   icons: {
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "UNI MART",
-    description: "Verified ABUAD student-only marketplace.",
+    description: "Verified university student-only marketplace.",
     siteName: "UNI MART",
     type: "website",
   },

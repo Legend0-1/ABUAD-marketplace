@@ -63,10 +63,10 @@ export function Footer() {
         <div className="max-w-[1500px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/60">
           <div className="flex items-center gap-2">
             <img src="/logo-white.png" alt="UNI MART" className="h-6 w-auto" />
-            <span>© {new Date().getFullYear()} UNI MART. Built for Afe Babalola University students, by students.</span>
+            <span>© {new Date().getFullYear()} UNI MART. Built for university students, by students.</span>
           </div>
           <p className="flex items-center gap-1">
-            Made with <Heart className="w-3 h-3 fill-current" /> for ABUAD
+            Made with <Heart className="w-3 h-3 fill-current" /> for students
           </p>
         </div>
       </div>

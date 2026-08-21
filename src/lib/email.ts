@@ -49,7 +49,7 @@ function emailShell(bodyHtml: string, ctaLabel?: string, ctaUrl?: string): strin
       </div>` : ''}
     </div>
     <p style="font-size: 11px; color: #888; margin-top: 16px;">
-      UNI MART — Afe Babalola University's student marketplace.${appUrl ? ` <a href="${appUrl}" style="color: #888;">${appUrl}</a>` : ''}
+      UNI MART — a verified student marketplace.${appUrl ? ` <a href="${appUrl}" style="color: #888;">${appUrl}</a>` : ''}
     </p>
   </div>`
 }

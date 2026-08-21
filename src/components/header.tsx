@@ -78,7 +78,7 @@ export function Header() {
       // We don't track read state per-message in DB to keep things simple;
       // use lastMessage timestamp vs a sessionStorage watermark.
       if (data?.conversations) {
-        const lastSeen = Number(sessionStorage.getItem('abuad_inbox_seen') || 0)
+        const lastSeen = Number(sessionStorage.getItem('unimart_inbox_seen') || 0)
         const newest = data.conversations.reduce((max, c) => {
           const t = c.lastMessage ? new Date(c.lastMessage.createdAt).getTime() : 0
           return t > max ? t : max
@@ -106,8 +106,8 @@ export function Header() {
   const handleLogout = async () => {
     await api('/api/auth/logout', { method: 'POST' })
     setUser(null)
-    sessionStorage.removeItem('abuad_inbox_seen')
-    sessionStorage.removeItem('abuad_auth_dismissed')
+    sessionStorage.removeItem('unimart_inbox_seen')
+    sessionStorage.removeItem('unimart_auth_dismissed')
     sv({ name: 'home' })
   }
 
@@ -145,7 +145,7 @@ export function Header() {
             <div className="hidden xl:flex items-center gap-1 px-2 py-1.5 rounded hover:bg-white/10 cursor-default text-xs">
               <div className="flex flex-col leading-tight">
                 <span className="text-[10px] text-white/70">Deliver to</span>
-                <span className="font-bold">ABUAD Campus</span>
+                <span className="font-bold">My Campus</span>
               </div>
             </div>
 
@@ -398,7 +398,7 @@ export function Header() {
               onClick={() => sv({ name: 'sell' })}
               className="ml-auto px-3 py-1.5 rounded bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition shrink-0"
             >
-              + Sell on ABUAD
+              + Sell on UNI MART
             </button>
           </div>
         </div>

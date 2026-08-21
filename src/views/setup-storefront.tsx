@@ -98,7 +98,7 @@ export function SetupStorefrontPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Set up your Storefront</h1>
-            <p className="text-sm text-white/80">Reach thousands of ABUAD students with your products and services.</p>
+            <p className="text-sm text-white/80">Reach thousands of students with your products and services.</p>
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export function SetupStorefrontPage() {
             </div>
             <div className="sm:col-span-2">
               <Label>Contact Email <span className="text-destructive">*</span></Label>
-              <Input type="email" value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} placeholder="you@abuad.edu.ng" />
+              <Input type="email" value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} placeholder="you@student.unimart.ng" />
             </div>
           </div>
         </div>

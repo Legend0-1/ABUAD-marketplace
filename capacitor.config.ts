@@ -4,8 +4,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // server.url points at your deployed site — the app always loads the live version,
 // same as the Android TWA. There is no separate iOS codebase to maintain.
 const config: CapacitorConfig = {
-  appId: 'ng.edu.abuad.marketplace',
-  appName: 'ABUAD Marketplace',
+  appId: 'app.unimart.marketplace',
+  appName: 'UNI MART',
   webDir: 'public', // unused when server.url is set, but required by the CLI
   server: {
     // Replace with your real deployed domain before building.

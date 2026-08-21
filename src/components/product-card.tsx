@@ -100,7 +100,7 @@ export function ProductCard({ product, compact }: Props) {
         </div>
         <span className="price-tag mt-1 self-start">₦{product.price.toLocaleString()}</span>
         <p className="text-xs text-muted-foreground truncate">
-          {product.storefront?.name || product.seller?.fullName || 'ABUAD seller'}
+          {product.storefront?.name || product.seller?.fullName || 'Verified seller'}
         </p>
         <div className="flex gap-1 mt-2">
           <Button size="sm" variant="outline" className="flex-1 h-8" onClick={onAddToCart}>

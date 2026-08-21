@@ -3,7 +3,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "ng.edu.abuad.marketplace",
+      "package_name": "app.unimart.marketplace",
       "sha256_cert_fingerprints": ["SHA256_FINGERPRINT_PLACEHOLDER"]
     }
   }

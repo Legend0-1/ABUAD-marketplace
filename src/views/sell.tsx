@@ -145,7 +145,7 @@ export function SellPage() {
       </div>
 
       <h1 className="text-2xl font-bold mb-1">List a Product or Service</h1>
-      <p className="text-sm text-muted-foreground mb-4">Reach thousands of ABUAD students. Remember the 20% service charge applies on each sale.</p>
+      <p className="text-sm text-muted-foreground mb-4">Reach thousands of students. Remember the 20% service charge applies on each sale.</p>
 
       <div className="bg-card border rounded-lg p-4 sm:p-6 space-y-4">
         <div>

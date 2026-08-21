@@ -58,7 +58,7 @@ export function InboxPage() {
   // Mark inbox seen when opened
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('abuad_inbox_seen', String(Date.now()))
+      sessionStorage.setItem('unimart_inbox_seen', String(Date.now()))
     }
   }, [])
 
@@ -136,7 +136,7 @@ export function InboxPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-sm truncate">
-                    {c.type === 'admin_direct' ? 'ABUAD Admin' : c.otherParty?.fullName || 'Unknown'}
+                    {c.type === 'admin_direct' ? 'UNI MART Admin' : c.otherParty?.fullName || 'Unknown'}
                   </p>
                   {c.type === 'admin_direct' && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
                   {c.messageCount > 0 && <span className="ml-auto text-xs text-muted-foreground">{c.messageCount} msgs</span>}

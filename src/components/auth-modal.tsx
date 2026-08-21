@@ -134,7 +134,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             <div>
               <DialogTitle className="text-xl">Welcome to UNI MART</DialogTitle>
               <DialogDescription className="text-sm">
-                A safe, verified marketplace for Afe Babalola University students only.
+                A safe, verified marketplace for university students only.
               </DialogDescription>
             </div>
           </div>
@@ -146,7 +146,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           <div className="text-sm">
             <p className="font-bold text-primary">Why we verify every student</p>
             <p className="text-muted-foreground mt-1">
-              We collect your name, matric number, level, department and a profile photo to protect you and other users of the platform from fraudulent activities. Your matric number is unique to you and confirms that you are a bona-fide ABUAD student. All data is kept confidential and is never shared with third parties.
+              We collect your name, matric number, level, department and a profile photo to protect you and other users of the platform from fraudulent activities. Your matric number is unique to you and confirms that you are a bona-fide student. All data is kept confidential and is never shared with third parties.
             </p>
           </div>
         </div>
@@ -230,7 +230,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded flex gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <p>By creating an account you confirm that the information provided is accurate and that you are a current ABUAD student. Providing false matric information will result in immediate suspension.</p>
+              <p>By creating an account you confirm that the information provided is accurate and that you are a current student. Providing false matric information will result in immediate suspension.</p>
             </div>
 
             <Button onClick={submitRegister} disabled={busy} className="w-full" size="lg">
@@ -301,7 +301,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             <div className="space-y-3">
               <div>
                 <Label htmlFor="loginEmail">Email</Label>
-                <Input id="loginEmail" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="chioma.okafor@abuad.edu.ng" />
+                <Input id="loginEmail" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="chioma.okafor@student.unimart.ng" />
               </div>
               <div>
                 <Label htmlFor="loginPassword">Password</Label>
@@ -320,8 +320,8 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             </Button>
             <div className="rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
               <p className="font-bold mb-1">Demo accounts</p>
-              <p>Admin: <code className="bg-background px-1 rounded">admin@abuad.marketplace</code> / <code className="bg-background px-1 rounded">admin1234</code></p>
-              <p>Seller: <code className="bg-background px-1 rounded">chioma.okafor@abuad.edu.ng</code> / <code className="bg-background px-1 rounded">password123</code></p>
+              <p>Admin: <code className="bg-background px-1 rounded">admin@unimart.ng</code> / <code className="bg-background px-1 rounded">admin1234</code></p>
+              <p>Seller: <code className="bg-background px-1 rounded">chioma.okafor@student.unimart.ng</code> / <code className="bg-background px-1 rounded">password123</code></p>
             </div>
             <p className="text-xs text-center text-muted-foreground">
               New here?{' '}

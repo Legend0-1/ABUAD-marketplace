@@ -1,7 +1,7 @@
 {
-  "packageId": "ng.edu.abuad.marketplace",
+  "packageId": "app.unimart.marketplace",
   "host": "your-app.vercel.app",
-  "name": "ABUAD Marketplace",
+  "name": "UNI MART",
   "launcherName": "UNI MART",
   "display": "standalone",
   "themeColor": "#153B3D",

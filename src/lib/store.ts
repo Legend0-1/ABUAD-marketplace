@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { viewToPath } from './routing'
 
 export type SessionUser = {
   id: string
@@ -58,6 +59,7 @@ type Store = {
 
   view: View
   setView: (v: View) => void
+  setViewFromPopstate: (v: View) => void
 
   cart: CartItem[]
   addToCart: (item: CartItem) => void
@@ -87,6 +89,19 @@ export const useStore = create<Store>()(
 
       view: { name: 'home' },
       setView: (v) => {
+        set({ view: v })
+        if (typeof window !== 'undefined') {
+          const path = viewToPath(v)
+          if (window.location.pathname + window.location.search !== path) {
+            window.history.pushState({ uniMartView: v }, '', path)
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      },
+      // Used only by the popstate listener (browser back/forward) -- the
+      // browser has already moved the history position itself, so this must
+      // NOT push another entry, or back/forward would get stuck looping.
+      setViewFromPopstate: (v) => {
         set({ view: v })
         if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
       },
@@ -122,8 +137,8 @@ export const useStore = create<Store>()(
       dismissToast: (id) => set({ toasts: get().toasts.filter((x) => x.id !== id) }),
     }),
     {
-      name: 'abuad-marketplace',
-      partialize: (s) => ({ cart: s.cart, view: s.view }) as any,
+      name: 'unimart-storage',
+      partialize: (s) => ({ cart: s.cart }) as any,
     }
   )
 )

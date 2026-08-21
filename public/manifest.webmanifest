@@ -1,7 +1,7 @@
 {
   "name": "UNI MART",
   "short_name": "UNI MART",
-  "description": "Verified ABUAD student-only marketplace. Buy and sell food, gadgets, clothes, services and more on a safe, moderated platform.",
+  "description": "Verified university student-only marketplace. Buy and sell gadgets, clothes, services and more on a safe, moderated platform.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

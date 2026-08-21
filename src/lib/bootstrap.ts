@@ -6,7 +6,7 @@ import { backfillReferralCodes } from './referral'
 // Idempotent — safe to call on every server start.
 export async function bootstrapMarketplace() {
   // 1. Admin user
-  const adminEmail = 'admin@abuad.marketplace'
+  const adminEmail = 'admin@unimart.ng'
   let admin = await db.user.findUnique({ where: { email: adminEmail } })
   if (!admin) {
     admin = await db.user.create({
@@ -83,7 +83,7 @@ export async function bootstrapMarketplace() {
 async function seedDemoData() {
   const demoSellers = [
     {
-      email: 'chioma.okafor@abuad.edu.ng',
+      email: 'chioma.okafor@student.unimart.ng',
       fullName: 'Chioma Okafor',
       matricNumber: 'AHS/2021/0456',
       level: '300',
@@ -96,12 +96,12 @@ async function seedDemoData() {
         accountName: 'Okafor Chioma',
         accountNumber: '0123456789',
         phoneNumber: '08012345678',
-        contactEmail: 'chioma.okafor@abuad.edu.ng',
+        contactEmail: 'chioma.okafor@student.unimart.ng',
         status: 'active',
       },
     },
     {
-      email: 'tunde.bello@abuad.edu.ng',
+      email: 'tunde.bello@student.unimart.ng',
       fullName: 'Tunde Bello',
       matricNumber: 'ENG/2020/0123',
       level: '400',
@@ -114,30 +114,30 @@ async function seedDemoData() {
         accountName: 'Bello Tunde',
         accountNumber: '0987654321',
         phoneNumber: '08098765432',
-        contactEmail: 'tunde.bello@abuad.edu.ng',
+        contactEmail: 'tunde.bello@student.unimart.ng',
         status: 'active',
       },
     },
     {
-      email: 'amina.yusuf@abuad.edu.ng',
+      email: 'amina.yusuf@student.unimart.ng',
       fullName: 'Amina Yusuf',
       matricNumber: 'LAW/2022/0789',
       level: '200',
       department: 'Law',
       storefront: {
         name: 'Amina Errands & Co.',
-        description: 'Fast delivery, errands, and pick-up services across ABUAD campus. Pay a fair price.',
+        description: 'Fast delivery, errands, and pick-up services across campus. Pay a fair price.',
         type: 'services',
         bankName: 'Zenith Bank',
         accountName: 'Yusuf Amina',
         accountNumber: '0567891234',
         phoneNumber: '08123456789',
-        contactEmail: 'amina.yusuf@abuad.edu.ng',
+        contactEmail: 'amina.yusuf@student.unimart.ng',
         status: 'active',
       },
     },
     {
-      email: 'david.adebayo@abuad.edu.ng',
+      email: 'david.adebayo@student.unimart.ng',
       fullName: 'David Adebayo',
       matricNumber: 'SCI/2021/0345',
       level: '300',
@@ -150,7 +150,7 @@ async function seedDemoData() {
         accountName: 'Adebayo David',
         accountNumber: '0345678901',
         phoneNumber: '08087654321',
-        contactEmail: 'david.adebayo@abuad.edu.ng',
+        contactEmail: 'david.adebayo@student.unimart.ng',
         status: 'active',
       },
     },
@@ -188,10 +188,10 @@ async function seedDemoData() {
   const shoesCat = await db.category.findUnique({ where: { slug: 'shoe-repair-care' } })
   const booksCat = await db.category.findUnique({ where: { slug: 'textbooks-study-materials' } })
 
-  const chioma = await db.user.findUnique({ where: { email: 'chioma.okafor@abuad.edu.ng' } })
-  const tunde = await db.user.findUnique({ where: { email: 'tunde.bello@abuad.edu.ng' } })
-  const amina = await db.user.findUnique({ where: { email: 'amina.yusuf@abuad.edu.ng' } })
-  const david = await db.user.findUnique({ where: { email: 'david.adebayo@abuad.edu.ng' } })
+  const chioma = await db.user.findUnique({ where: { email: 'chioma.okafor@student.unimart.ng' } })
+  const tunde = await db.user.findUnique({ where: { email: 'tunde.bello@student.unimart.ng' } })
+  const amina = await db.user.findUnique({ where: { email: 'amina.yusuf@student.unimart.ng' } })
+  const david = await db.user.findUnique({ where: { email: 'david.adebayo@student.unimart.ng' } })
   if (!chioma || !tunde || !amina || !david || !phoneCat || !deliveryCat || !notesCat || !clothesCat || !laundryCat || !printingCat || !shoesCat || !booksCat) return
 
   const chiomaStore = (await db.storefront.findUnique({ where: { ownerId: chioma.id } }))!

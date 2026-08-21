@@ -26,7 +26,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 const HERO_SLIDES = [
   {
     title: 'Trade Smarter on Campus',
-    subtitle: 'Buy & sell with verified ABUAD students. Safe, fast, and trusted.',
+    subtitle: 'Buy & sell with verified university students. Safe, fast, and trusted.',
     cta: 'Start Selling',
     bg: 'from-teal-900 via-teal-800 to-amber-700',
     image: '/hero-marketplace.svg',
@@ -110,7 +110,7 @@ export function HomePage() {
           <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-10 sm:py-16 lg:py-20 relative">
             <div className="max-w-2xl">
               <Badge className="bg-white/20 text-white border-white/30 mb-3">
-                <ShieldCheck className="w-3 h-3 mr-1" /> Verified ABUAD Students Only
+                <ShieldCheck className="w-3 h-3 mr-1" /> Verified Students Only
               </Badge>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3 drop-shadow">
                 {hero.title}
@@ -187,7 +187,7 @@ export function HomePage() {
             </div>
             <div>
               <h2 className="text-xl font-bold">Today's Deals on Campus</h2>
-              <p className="text-sm text-muted-foreground">Hot prices from verified ABUAD sellers. New deals daily.</p>
+              <p className="text-sm text-muted-foreground">Hot prices from verified sellers. New deals daily.</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -205,7 +205,7 @@ export function HomePage() {
                 <Truck className="w-5 h-5 text-primary" />
                 <h2 className="text-xl font-bold">Errands & Delivery</h2>
                 <Badge variant="secondary" className="text-xs">
-                  <ShieldCheck className="w-3 h-3 mr-1" /> Verified ABUAD Runners
+                  <ShieldCheck className="w-3 h-3 mr-1" /> Verified Delivery Runners
                 </Badge>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setView({ name: 'category', slug: 'delivery-services', categoryName: 'Delivery Services' })}>
@@ -280,7 +280,7 @@ export function HomePage() {
         {/* Safety & trust strip */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { icon: ShieldCheck, title: 'Matric-Verified', text: 'Every account is tied to a unique ABUAD matric number.' },
+            { icon: ShieldCheck, title: 'Matric-Verified', text: 'Every account is tied to a unique, verified matric number.' },
             { icon: Truck, title: 'Buyer Acknowledgement', text: 'Sellers are paid only after you confirm receipt.' },
             { icon: Scale, title: 'Real Dispute Support', text: 'A real admin reviews every dispute, not an automated form.' },
             { icon: Sparkles, title: 'Fraud Protection', text: 'Suspicious activity is reviewed by our safety team.' },

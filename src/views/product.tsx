@@ -333,7 +333,7 @@ export function ProductPage({ productId }: { productId: string }) {
                 <span>{product.storefront.rating?.toFixed?.(1) || 'New'} seller rating</span>
               </p>
               <p className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /> {product.seller.department}</p>
-              <p className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Verified ABUAD student</p>
+              <p className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Verified student</p>
               <p className="flex items-center gap-1.5"><Store className="w-3 h-3" /> {product.seller.level} Level</p>
             </div>
             {product.category?.requiresApproval && (

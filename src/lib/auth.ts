@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs'
 // their next successful login (see needsRehash below), rather than forcing
 // every existing user to reset their password.
 function legacyHashPassword(password: string): string {
-  const salt = process.env.AUTH_SALT || 'abuad-marketplace-salt-2024'
+  const salt = process.env.AUTH_SALT || 'unimart-salt-2024'
   return crypto
     .createHash('sha256')
     .update(salt + ':' + password)
@@ -40,7 +40,7 @@ export function needsRehash(hash: string): boolean {
 // hand-craft a base64-encoded {"userId": "...", "exp": ...} payload and
 // impersonate any account without ever knowing their password.
 function getSessionSecret(): string {
-  return process.env.AUTH_SALT || 'abuad-marketplace-salt-2024'
+  return process.env.AUTH_SALT || 'unimart-salt-2024'
 }
 
 function signPayload(payloadB64: string): string {

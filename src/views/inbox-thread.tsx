@@ -121,7 +121,7 @@ export function InboxThreadPage({ conversationId }: { conversationId: string }) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-bold text-sm truncate">
-              {isAdminConv ? 'ABUAD Admin' : otherParty?.fullName}
+              {isAdminConv ? 'UNI MART Admin' : otherParty?.fullName}
             </p>
             {isAdminConv && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
           </div>

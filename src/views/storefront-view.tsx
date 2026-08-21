@@ -97,7 +97,7 @@ export function StorefrontViewPage({ ownerId }: { ownerId: string }) {
               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" /> {storefront.rating?.toFixed?.(1) || 'New'} rating</span>
                 <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" /> {storefront.products.length} listings</span>
-                <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Verified ABUAD student</span>
+                <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Verified student</span>
                 <span>{storefront.owner?.department} · {storefront.owner?.level} Level</span>
               </div>
             </div>

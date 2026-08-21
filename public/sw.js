@@ -4,7 +4,7 @@
 // since this is a marketplace with live pricing/stock/order data that must
 // always be fresh.
 
-const CACHE_NAME = "abuad-marketplace-static-v1";
+const CACHE_NAME = "unimart-static-v1";
 const STATIC_ASSETS = ["/icons/icon-192.png", "/icons/icon-512.png", "/logo.svg"];
 
 self.addEventListener("install", (event) => {

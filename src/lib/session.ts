@@ -21,7 +21,7 @@ export type SessionUser = {
 export async function getCurrentUser(): Promise<SessionUser | null> {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get('abuad_session')?.value
+    const token = cookieStore.get('unimart_session')?.value
     const parsed = parseSessionToken(token)
     if (!parsed) return null
 

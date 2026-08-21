@@ -3,16 +3,16 @@
 import { PolicyPage } from '@/components/policy-page'
 import { Info } from 'lucide-react'
 
-const BODY = `UNI MART is a marketplace built exclusively for verified students of Afe Babalola University (ABUAD). It exists to make campus life easier: a safe, accountable place to buy and sell the things students actually need — gadgets, clothes, textbooks and notes, errands, and everyday essentials — directly with each other.
+const BODY = `UNI MART is a marketplace built exclusively for verified university students. It exists to make campus life easier: a safe, accountable place to buy and sell the things students actually need — gadgets, clothes, textbooks and notes, errands, and everyday essentials — directly with each other.
 
 WHO CAN USE IT
-Every account is tied to a verified ABUAD matric number at sign-up. This isn't a public marketplace open to anyone on the internet — it's a closed, campus-only community, which is a big part of why we can offer the protections below.
+Every account is tied to a verified matric number at sign-up. This isn't a public marketplace open to anyone on the internet — it's a closed, campus-only community, which is a big part of why we can offer the protections below.
 
 HOW BUYING & SELLING WORKS
 Sellers list items or services through their own storefront. When a buyer pays, the money is held by the platform, not sent straight to the seller. It's only released to the seller once the buyer confirms they've received the item or service in good order. This escrow model protects buyers from paying for something that never shows up, and protects sellers by guaranteeing that once a buyer confirms receipt, payment follows immediately.
 
 WHY WE'RE DIFFERENT FROM A GENERIC CLASSIFIEDS APP
-- Every user is a real, identifiable ABUAD student — not an anonymous stranger.
+- Every user is a real, identifiable student — not an anonymous stranger.
 - Payments are protected by escrow, not "pay and hope."
 - Disputes are reviewed by a real admin team, not left for buyer and seller to sort out alone.
 - A small service charge on sales keeps the platform funded without charging students to browse, list, or message — see "Our Service Charge" for exactly what that covers.

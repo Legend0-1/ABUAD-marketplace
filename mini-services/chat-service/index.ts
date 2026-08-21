@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
 
 const PORT = Number(process.env.PORT) || 3003
 httpServer.listen(PORT, () => {
-  console.log(`ABUAD chat WebSocket server running on port ${PORT}`)
+  console.log(`UNI MART chat WebSocket server running on port ${PORT}`)
 })
 
 process.on('SIGTERM', () => {

@@ -232,7 +232,7 @@ export function AdminPage() {
                             <AvatarFallback className="text-xs">{u.fullName.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="font-medium truncate">{u.fullName} {u.isAdmin && <ShieldCheck className="w-3 h-3 inline text-primary" />}</p>
+                            <p className="font-medium truncate">{u.fullName} {u.isAdmin && <ShieldCheck className="w-3 h-3 inline text-primary" />} {u.isHR && <Badge variant="outline" className="text-[9px] ml-1">HR</Badge>}</p>
                             <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                           </div>
                         </div>
@@ -245,8 +245,8 @@ export function AdminPage() {
                         {u._count?.reportsAgainst > 0 ? <Badge variant="destructive">{u._count.reportsAgainst}</Badge> : '—'}
                       </td>
                       <td className="p-3">
-                        {!u.isAdmin && (
-                          u.isBanned ? (
+                        <div className="flex flex-wrap gap-1">
+                          {u.isBanned ? (
                             <Button size="sm" variant="outline" onClick={async () => {
                               const { error } = await api('/api/admin/users', { method: 'POST', body: { userId: u.id, action: 'unban' } })
                               if (error) { toast.error(error); return }
@@ -261,8 +261,40 @@ export function AdminPage() {
                               toast.success('User banned')
                               reload()
                             }}>Ban</Button>
-                          )
-                        )}
+                          )}
+                          {u.isAdmin ? (
+                            <Button size="sm" variant="outline" onClick={async () => {
+                              if (!confirm(`Remove admin access from ${u.fullName}?`)) return
+                              const { error } = await api('/api/admin/users', { method: 'POST', body: { userId: u.id, action: 'remove_admin' } })
+                              if (error) { toast.error(error); return }
+                              toast.success('Admin access removed')
+                              reload()
+                            }}>Remove Admin</Button>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={async () => {
+                              if (!confirm(`Grant admin access to ${u.fullName}? This gives full platform control.`)) return
+                              const { error } = await api('/api/admin/users', { method: 'POST', body: { userId: u.id, action: 'make_admin' } })
+                              if (error) { toast.error(error); return }
+                              toast.success('Admin access granted')
+                              reload()
+                            }}>Make Admin</Button>
+                          )}
+                          {u.isHR ? (
+                            <Button size="sm" variant="outline" onClick={async () => {
+                              const { error } = await api('/api/admin/users', { method: 'POST', body: { userId: u.id, action: 'remove_hr' } })
+                              if (error) { toast.error(error); return }
+                              toast.success('HR access removed')
+                              reload()
+                            }}>Remove HR</Button>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={async () => {
+                              const { error } = await api('/api/admin/users', { method: 'POST', body: { userId: u.id, action: 'make_hr' } })
+                              if (error) { toast.error(error); return }
+                              toast.success('HR access granted')
+                              reload()
+                            }}>Make HR</Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -276,7 +308,7 @@ export function AdminPage() {
         <TabsContent value="messages" className="mt-4 space-y-2">
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-500/30 rounded p-3 text-xs text-amber-700 dark:text-amber-400 flex gap-2 mb-2">
             <Eye className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>Admin silent oversight — users are NOT notified when you read their messages. Use Broadcast to send them official notices.</span>
+            <span>Message review is for safety/fraud investigations, as disclosed in the Seller Agreement. Use Broadcast to send official notices.</span>
           </div>
           <h2 className="font-bold">All Conversations ({conversations.length})</h2>
           {conversations.map((c) => (

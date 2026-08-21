@@ -6,7 +6,7 @@ import { ShieldCheck } from 'lucide-react'
 const BODY = `Your safety matters more than any transaction. These are the practices we build into the platform, and the ones we ask every student to follow.
 
 VERIFIED IDENTITY, EVERY TIME
-Every account belongs to a real ABUAD student verified by matric number at sign-up. If you're dealing with someone on UNI MART, you're dealing with a real, identifiable person from your own campus — not an anonymous stranger.
+Every account belongs to a real, verified student — verified by matric number at sign-up. If you're dealing with someone on UNI MART, you're dealing with a real, identifiable person from your own campus — not an anonymous stranger.
 
 MEETING UP SAFELY
 - Prefer well-lit, populated campus locations for handovers — hostels lobbies, faculty buildings, or the student center are good defaults.
