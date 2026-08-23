@@ -149,8 +149,8 @@ export function Header() {
               </div>
             </div>
 
-            {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-3xl flex items-stretch rounded-md overflow-hidden bg-white shadow-sm">
+            {/* Search — full row on its own on mobile (see below), inline on larger screens */}
+            <form onSubmit={handleSearch} className="hidden sm:flex flex-1 min-w-0 max-w-3xl items-stretch rounded-md overflow-hidden bg-white shadow-sm">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -316,14 +316,14 @@ export function Header() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:bg-white/10 hover:text-white"
+                    className="text-white hover:bg-white/10 hover:text-white px-2 sm:px-3"
                     onClick={() => openAuth('login')}
                   >
                     Sign In
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    className="hidden sm:inline-flex bg-primary hover:bg-primary/90 text-primary-foreground"
                     onClick={() => openAuth('register')}
                   >
                     Create Account
@@ -332,6 +332,23 @@ export function Header() {
               )}
             </div>
           </div>
+
+          {/* Mobile search — its own full-width row, since the main row has no room for it on narrow screens */}
+          <form onSubmit={handleSearch} className="sm:hidden flex items-stretch rounded-md overflow-hidden bg-white shadow-sm mb-2">
+            <Input
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              placeholder="Search products, services, sellers…"
+              className="flex-1 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-foreground"
+            />
+            <button
+              type="submit"
+              className="px-4 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          </form>
 
           {/* Secondary nav: categories scrollable bar */}
           <div className="hidden lg:flex items-center gap-1 h-10 text-sm border-t border-white/10 overflow-x-auto scrollbar-thin relative">
