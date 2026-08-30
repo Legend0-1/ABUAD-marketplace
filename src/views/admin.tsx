@@ -208,6 +208,22 @@ export function AdminPage() {
 
         {/* Users */}
         <TabsContent value="users" className="mt-4">
+          <div className="mb-3 flex items-center justify-between flex-wrap gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-500/30 rounded-lg p-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 flex-1 min-w-0">
+              One-time cleanup: updates known demo account emails (admin + seeded sellers) from the old ABUAD-branded addresses to the new ones. Safe to run more than once — already-migrated accounts are skipped.
+            </p>
+            <Button size="sm" variant="outline" onClick={async () => {
+              const { data, error } = await api<{ results: any[] }>('/api/admin/migrate-demo-emails', { method: 'POST' })
+              if (error) { toast.error(error); return }
+              const updated = data?.results.filter((r: any) => r.status === 'updated').length || 0
+              toast.success(`${updated} account${updated === 1 ? '' : 's'} updated`, {
+                description: data?.results.map((r: any) => `${r.oldEmail} → ${r.status === 'updated' ? r.newEmail : r.status}`).join('\n'),
+              })
+              reload()
+            }}>
+              Migrate Demo Emails
+            </Button>
+          </div>
           <div className="bg-card border rounded-lg overflow-hidden">
             <div className="overflow-x-auto scrollbar-thin">
               <table className="w-full text-sm">
