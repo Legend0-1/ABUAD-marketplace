@@ -35,6 +35,7 @@ import { DeliveryPartnerRegisterPage } from '@/views/delivery-partner-register'
 import { DeliveriesPage } from '@/views/deliveries'
 import { HRQueuePage } from '@/views/hr-queue'
 import { ResetPasswordPage } from '@/views/reset-password'
+import { PrivacyPolicyPage } from '@/views/privacy-policy'
 
 import { pathToView } from '@/lib/routing'
 
@@ -149,6 +150,7 @@ export default function Home() {
         {view.name === 'deliveries' && <DeliveriesPage />}
         {view.name === 'hr-queue' && <HRQueuePage />}
         {view.name === 'reset-password' && <ResetPasswordPage token={view.token} />}
+        {view.name === 'privacy-policy' && <PrivacyPolicyPage />}
       </main>
       <Footer />
       <AuthModal open={authModalOpen} onOpenChange={(o) => {

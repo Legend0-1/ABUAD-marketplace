@@ -110,3 +110,43 @@ export async function sendPasswordResetEmail(params: { email: string; fullName: 
     ),
   })
 }
+
+export async function sendRegistrationPendingEmail(params: { email: string; fullName: string }) {
+  return sendEmail({
+    to: params.email,
+    subject: 'Your UNI MART registration is being reviewed',
+    html: emailShell(
+      `<h2 style="margin-top:0;">Thanks for signing up!</h2>
+       <p>Hi ${params.fullName},</p>
+       <p>Your account has been created and is now waiting on a quick admin approval before you can log in. This is usually fast — you'll get another email the moment it's approved.</p>`
+    ),
+  })
+}
+
+export async function sendAccountApprovedEmail(params: { email: string; fullName: string }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || ''
+  return sendEmail({
+    to: params.email,
+    subject: 'Your UNI MART account is approved!',
+    html: emailShell(
+      `<h2 style="margin-top:0;">You're in! 🎉</h2>
+       <p>Hi ${params.fullName},</p>
+       <p>Your account has been approved. You can log in now and start browsing, buying, or setting up your own storefront.</p>`,
+      'Log In Now',
+      appUrl || '#'
+    ),
+  })
+}
+
+export async function sendAccountRejectedEmail(params: { email: string; fullName: string; reason?: string }) {
+  return sendEmail({
+    to: params.email,
+    subject: 'Your UNI MART registration',
+    html: emailShell(
+      `<h2 style="margin-top:0;">Registration not approved</h2>
+       <p>Hi ${params.fullName},</p>
+       <p>We weren't able to approve your account.${params.reason ? ` Reason given: <em>${params.reason}</em>` : ''}</p>
+       <p style="color:#666; font-size: 13px;">If you believe this is a mistake, please reach out so we can take another look.</p>`
+    ),
+  })
+}

@@ -12,7 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Shield, ShieldCheck, Upload, X, GraduationCap, AlertCircle, Loader2 } from 'lucide-react'
+import { Shield, ShieldCheck, Upload, X, GraduationCap, AlertCircle, Loader2, UserCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 
@@ -67,14 +67,12 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error('Registration failed', { description: error })
       return
     }
-    setUser(data.user)
-    storeToast({ title: `Welcome, ${data.user.fullName.split(' ')[0]}!`, description: 'Your UNI MART account is ready.', variant: 'success' })
-    onOpenChange(false)
-    setView({ name: 'home' })
+    setRegistrationPending(true)
   }
 
   const [twoFactorPending, setTwoFactorPending] = useState<string | null>(null)
   const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [registrationPending, setRegistrationPending] = useState(false)
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
@@ -158,6 +156,23 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           </TabsList>
 
           <TabsContent value="register" className="space-y-3 mt-4">
+            {registrationPending ? (
+              <div className="text-center space-y-2 py-6">
+                <UserCheck className="w-10 h-10 mx-auto text-primary" />
+                <p className="font-bold">Registration received!</p>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                  Your account needs a quick admin approval before you can log in. You'll get an email the moment it's approved — this is usually fast.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => { setRegistrationPending(false); setMode('login') }}
+                  className="mt-2"
+                >
+                  Back to Sign In
+                </Button>
+              </div>
+            ) : (
+            <>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
@@ -240,6 +255,8 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               Already have an account?{' '}
               <button onClick={() => setMode('login')} className="text-primary font-medium hover:underline">Sign in</button>
             </p>
+            </>
+            )}
           </TabsContent>
 
           <TabsContent value="login" className="space-y-3 mt-4">
@@ -318,11 +335,6 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             <Button onClick={submitLogin} disabled={busy} className="w-full" size="lg">
               {busy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing in…</> : 'Sign In'}
             </Button>
-            <div className="rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
-              <p className="font-bold mb-1">Demo accounts</p>
-              <p>Admin: <code className="bg-background px-1 rounded">admin@unimart.ng</code> / <code className="bg-background px-1 rounded">admin1234</code></p>
-              <p>Seller: <code className="bg-background px-1 rounded">chioma.okafor@student.unimart.ng</code> / <code className="bg-background px-1 rounded">password123</code></p>
-            </div>
             <p className="text-xs text-center text-muted-foreground">
               New here?{' '}
               <button onClick={() => setMode('register')} className="text-primary font-medium hover:underline">Create an account</button>

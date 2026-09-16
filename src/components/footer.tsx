@@ -44,6 +44,7 @@ export function Footer() {
           <h4 className="font-bold mb-3 text-white/90">Help & Safety</h4>
           <ul className="space-y-2 text-white/70">
             <li className="hover:text-white cursor-pointer" onClick={() => setView({ name: 'agreement' })}>Seller Agreement</li>
+            <li className="hover:text-white cursor-pointer" onClick={() => setView({ name: 'privacy-policy' })}>Privacy Policy</li>
             <li className="hover:text-white cursor-pointer" onClick={() => setView({ name: 'report-user' })}>Report a User</li>
             <li className="hover:text-white cursor-pointer" onClick={() => setView({ name: 'feedback' })}>Give Us Feedback</li>
             <li className="hover:text-white cursor-pointer" onClick={() => setView({ name: 'dispute-resolution' })}>Dispute Resolution</li>

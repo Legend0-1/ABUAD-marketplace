@@ -1,10 +1,19 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
 import { createEmailVerificationToken } from '@/lib/auth'
 import { sendVerificationEmail } from '@/lib/email'
+import { checkRateLimit } from '@/lib/rate-limit'
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const { allowed, retryAfterSeconds } = await checkRateLimit(req, 'resendVerification')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Too many requests. Try again in about ${Math.ceil((retryAfterSeconds || 60) / 60)} minute(s).` },
+      { status: 429 }
+    )
+  }
+
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

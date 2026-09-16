@@ -77,6 +77,16 @@ export async function bootstrapMarketplace() {
     await db.user.updateMany({ data: { emailVerified: true } })
   }
 
+  // 7. Same one-time backfill pattern for account approval -- existing users
+  // predate this requirement too, so they're grandfathered in as approved
+  // rather than suddenly locked out. Genuinely new registrations after this
+  // point aren't caught by this check, since the admin is already approved
+  // by the time this runs on any later call.
+  const anyoneApproved = await db.user.findFirst({ where: { isApproved: true } })
+  if (!anyoneApproved) {
+    await db.user.updateMany({ data: { isApproved: true, approvedAt: new Date() } })
+  }
+
   return { admin }
 }
 

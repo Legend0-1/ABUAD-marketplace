@@ -43,6 +43,7 @@ export type View =
   | { name: 'deliveries' }
   | { name: 'hr-queue' }
   | { name: 'reset-password'; token: string }
+  | { name: 'privacy-policy' }
 
 type CartItem = {
   productId: string

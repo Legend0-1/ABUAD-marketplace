@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, createSessionToken, createEmailVerificationToken } from '@/lib/auth'
+import { hashPassword, createEmailVerificationToken } from '@/lib/auth'
 import { bootstrapMarketplace } from '@/lib/bootstrap'
 import { generateUniqueReferralCode } from '@/lib/referral'
-import { sendVerificationEmail } from '@/lib/email'
+import { sendVerificationEmail, sendRegistrationPendingEmail } from '@/lib/email'
+import { logAudit } from '@/lib/audit'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const { allowed, retryAfterSeconds } = await checkRateLimit(req, 'register')
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Too many registration attempts from this network. Try again in about ${Math.ceil((retryAfterSeconds || 60) / 60)} minute(s).` },
+        { status: 429 }
+      )
+    }
+
     // Ensure marketplace is bootstrapped (admin + categories + agreement + referral code backfill)
     await bootstrapMarketplace()
 
@@ -56,31 +66,18 @@ export async function POST(req: NextRequest) {
     await sendVerificationEmail({ email: user.email, fullName: user.fullName, token: verifyToken }).catch((e) =>
       console.error('verification email failed', e)
     )
+    await sendRegistrationPendingEmail({ email: user.email, fullName: user.fullName }).catch((e) =>
+      console.error('pending-approval email failed', e)
+    )
 
-    const token = createSessionToken(user.id)
-    const res = NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        matricNumber: user.matricNumber,
-        level: user.level,
-        department: user.department,
-        profilePicture: user.profilePicture,
-        isAdmin: user.isAdmin,
-        isHR: user.isHR,
-        phone: user.phone,
-        emailVerified: user.emailVerified,
-      },
+    await logAudit({ actor: null, action: 'user.registered', targetType: 'User', targetId: user.id, detail: `${user.fullName} (${user.email}) — awaiting approval` })
+
+    // No session is issued here -- new accounts require admin approval before
+    // they can log in at all. See /api/auth/login for the isApproved gate.
+    return NextResponse.json({
+      pendingApproval: true,
+      message: 'Registration received! Your account needs a quick admin approval before you can log in — you\'ll get an email the moment it\'s approved.',
     })
-    res.cookies.set('unimart_session', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    })
-    return res
   } catch (e: any) {
     console.error('register error', e)
     return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 })

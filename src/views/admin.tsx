@@ -21,6 +21,7 @@ import { AdminFeedbackManager } from '@/components/admin-feedback-manager'
 import { AdminAuditLog } from '@/components/admin-audit-log'
 import { AdminRevenueReport } from '@/components/admin-revenue-report'
 import { AdminReferralManager } from '@/components/admin-referral-manager'
+import { AdminApprovalsManager } from '@/components/admin-approvals-manager'
 
 export function AdminPage() {
   const { user, setView, setAuthModalOpen } = useStore()
@@ -88,6 +89,9 @@ export function AdminPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="approvals">
+            Approvals {stats?.pendingApprovals > 0 && <Badge className="ml-1 bg-red-500 text-white">{stats.pendingApprovals}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="storefronts">
             Storefronts {stats?.pendingStorefronts > 0 && <Badge className="ml-1 bg-amber-500 text-white">{stats.pendingStorefronts}</Badge>}
@@ -105,7 +109,32 @@ export function AdminPage() {
         </TabsList>
 
         {/* Overview */}
+        <TabsContent value="approvals" className="mt-4">
+          <AdminApprovalsManager />
+        </TabsContent>
+
         <TabsContent value="overview" className="mt-4 space-y-4">
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between flex-wrap gap-2">
+            <p className="text-xs text-amber-700 dark:text-amber-400 flex-1 min-w-0">
+              Pre-launch: hide the demo storefronts/listings so real students don't see fake data. Reversible — nothing is deleted.
+            </p>
+            <div className="flex gap-2 shrink-0">
+              <Button size="sm" variant="outline" onClick={async () => {
+                const { data, error } = await api<{ storefronts: number; products: number; note?: string }>('/api/admin/toggle-demo-data', { method: 'POST', body: { action: 'hide' } })
+                if (error) { toast.error(error); return }
+                toast.success(data?.note || `Hidden: ${data?.storefronts} storefronts, ${data?.products} products`)
+              }}>
+                Hide Demo Data
+              </Button>
+              <Button size="sm" variant="ghost" onClick={async () => {
+                const { data, error } = await api<{ storefronts: number; products: number }>('/api/admin/toggle-demo-data', { method: 'POST', body: { action: 'show' } })
+                if (error) { toast.error(error); return }
+                toast.success(`Restored: ${data?.storefronts} storefronts, ${data?.products} products`)
+              }}>
+                Undo / Show Again
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <StatCard icon={Users} label="Total Users" value={stats?.totalUsers || 0} />
             <StatCard icon={Store} label="Storefronts" value={stats?.totalStorefronts || 0} sub={`${stats?.pendingStorefronts || 0} pending`} />

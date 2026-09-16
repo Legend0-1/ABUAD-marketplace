@@ -20,7 +20,7 @@ export async function GET() {
     platformRevenue,
     openReports,
     totalMessages,
-    foodStorefronts,
+    pendingApprovals,
   ] = await Promise.all([
     db.user.count({ where: { isAdmin: false } }),
     db.storefront.count(),
@@ -32,7 +32,7 @@ export async function GET() {
     db.order.aggregate({ _sum: { serviceCharge: true } }),
     db.report.count({ where: { status: 'open' } }),
     db.message.count(),
-    db.storefront.count({ where: { status: 'pending_approval' } }),
+    db.user.count({ where: { isApproved: false, rejectedAt: null } }),
   ])
 
   // Recent orders
@@ -64,7 +64,7 @@ export async function GET() {
       platformRevenue: platformRevenue._sum.serviceCharge || 0,
       openReports,
       totalMessages,
-      foodStorefronts,
+      pendingApprovals,
     },
     recentOrders,
     categories,

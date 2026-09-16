@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyPassword, createSessionToken, createPendingTwoFactorToken, needsRehash, hashPassword } from '@/lib/auth'
 import { logAudit } from '@/lib/audit'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const { allowed, retryAfterSeconds } = await checkRateLimit(req, 'login')
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Try again in about ${Math.ceil((retryAfterSeconds || 60) / 60)} minute(s).` },
+        { status: 429 }
+      )
+    }
+
     const { email, password } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
@@ -16,6 +25,16 @@ export async function POST(req: NextRequest) {
     }
     if (user.isBanned) {
       return NextResponse.json({ error: 'Your account has been suspended. Contact the admin.' }, { status: 403 })
+    }
+    if (!user.isApproved) {
+      if (user.rejectedAt) {
+        return NextResponse.json({
+          error: `Your registration was not approved.${user.rejectionReason ? ` Reason: ${user.rejectionReason}` : ''} Contact the admin if you believe this is a mistake.`,
+        }, { status: 403 })
+      }
+      return NextResponse.json({
+        error: 'Your account is still pending admin approval. You\'ll get an email once it\'s approved — this is usually quick.',
+      }, { status: 403 })
     }
 
     // Silently upgrade legacy (pre-bcrypt) password hashes now that we know

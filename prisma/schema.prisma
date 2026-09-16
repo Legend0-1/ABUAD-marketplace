@@ -26,6 +26,15 @@ model User {
   isAdmin         Boolean  @default(false)
   isHR            Boolean  @default(false) // scoped admin role: manages delivery partner queue & assignments
   isBanned        Boolean  @default(false)
+  // New registrations require admin approval before they can log in.
+  // Nullable-safe default handled via one-time backfill (see bootstrap.ts) so
+  // existing users aren't suddenly locked out by a requirement that didn't
+  // exist when they joined.
+  isApproved      Boolean  @default(false)
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectedAt      DateTime?
+  rejectionReason String?
   // Two-factor authentication (TOTP)
   twoFactorSecret   String?
   twoFactorEnabled  Boolean  @default(false)

@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { createPasswordResetToken } from '@/lib/auth'
 import { sendPasswordResetEmail } from '@/lib/email'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const { allowed, retryAfterSeconds } = await checkRateLimit(req, 'forgotPassword')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Too many reset requests. Try again in about ${Math.ceil((retryAfterSeconds || 60) / 60)} minute(s).` },
+      { status: 429 }
+    )
+  }
+
   const { email } = await req.json()
   if (!email?.trim()) {
     return NextResponse.json({ error: 'Enter your email address' }, { status: 400 })
