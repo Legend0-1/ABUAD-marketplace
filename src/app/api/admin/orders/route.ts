@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
 import { checkAndCreateReferralCommission } from '@/lib/referral'
 import { refundTransaction, resolveBankCode, createTransferRecipient, initiateTransfer } from '@/lib/paystack'
+import { restockForRefundedOrder } from '@/lib/inventory'
 
 export async function GET() {
   try {
@@ -49,11 +50,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'This order has no payment reference on file — nothing to refund.' }, { status: 400 })
     }
 
+    // Only restock if this order had actually been paid (its stock was
+    // decremented at payment time). Skip orders still 'pending' or already
+    // 'refunded' so we never restock twice or return units that never left.
+    const PAID_STATES = ['paid', 'in_transit', 'delivered', 'acknowledged', 'disputed', 'completed']
+    const shouldRestock = PAID_STATES.includes(order.status)
+
     const updated = await db.order.update({
       where: { id: orderId },
       data: { status: 'refunded', refundedAt: new Date() },
     })
     await logAudit({ actor: admin, action: 'order.refund', targetType: 'Order', targetId: order.id, detail: `${order.reference}: ₦${order.totalAmount.toLocaleString()} — ${note || 'admin review'}` })
+    if (shouldRestock) {
+      await restockForRefundedOrder(orderId)
+    }
 
     let refundWarning: string | undefined
     try {

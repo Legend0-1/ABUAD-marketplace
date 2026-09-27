@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
+import { getStorefrontDeletionBlockers, hardDeleteStorefront } from '@/lib/account-deletion'
 
 // List all storefronts (with status filter)
 export async function GET(req: Request) {
@@ -77,4 +78,51 @@ export async function POST(req: Request) {
   await logAudit({ actor: admin, action: `storefront.${action}`, targetType: 'Storefront', targetId: storefront.id, detail: `${storefront.name} → ${newStatus}` })
 
   return NextResponse.json({ storefront, message: `Storefront ${action}d` })
+}
+
+// Permanently delete a storefront and all of its listings + order history.
+// The owner's account is left intact. Irreversible.
+export async function DELETE(req: Request) {
+  let admin
+  try {
+    admin = await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  }
+
+  const { storefrontId } = await req.json()
+  if (!storefrontId) return NextResponse.json({ error: 'storefrontId is required' }, { status: 400 })
+
+  const storefront = await db.storefront.findUnique({
+    where: { id: storefrontId },
+    select: { name: true, owner: { select: { fullName: true, email: true } } },
+  })
+  if (!storefront) return NextResponse.json({ error: 'Storefront not found' }, { status: 404 })
+
+  const blockers = await getStorefrontDeletionBlockers(storefrontId)
+  if (blockers.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Can't delete this storefront yet — ${blockers.join('; ')}. Settle or refund those first, or suspend it instead.`,
+      },
+      { status: 409 }
+    )
+  }
+
+  try {
+    await hardDeleteStorefront(storefrontId)
+  } catch (e: any) {
+    console.error('hard-delete storefront failed', e)
+    return NextResponse.json({ error: 'Could not delete this storefront. Nothing was changed.' }, { status: 500 })
+  }
+
+  await logAudit({
+    actor: admin,
+    action: 'storefront.delete',
+    targetType: 'Storefront',
+    targetId: storefrontId,
+    detail: `Permanently deleted storefront "${storefront.name}" (owner: ${storefront.owner?.fullName || 'unknown'})`,
+  })
+
+  return NextResponse.json({ ok: true, message: 'Storefront permanently deleted' })
 }

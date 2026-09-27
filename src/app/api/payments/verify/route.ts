@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyTransaction } from '@/lib/paystack'
+import { decrementStockForPaidOrder } from '@/lib/inventory'
 
 // Paystack redirects the buyer's browser here after checkout. We double check the
 // transaction and (as a fallback, in case the webhook hasn't landed yet) mark the
@@ -18,11 +19,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const verified = await verifyTransaction(order.paystackReference)
-    if (verified.status === 'success' && order.status === 'pending') {
-      await db.order.update({
-        where: { id: order.id },
+    if (verified.status === 'success') {
+      // Same atomic guard as the webhook: only the caller that actually flips
+      // pending -> paid decrements stock, so we never double-count a sale.
+      const flip = await db.order.updateMany({
+        where: { id: order.id, status: 'pending' },
         data: { status: 'paid', paidAt: new Date() },
       })
+      if (flip.count === 1) {
+        await decrementStockForPaidOrder(order.id)
+      }
     }
   } catch (e) {
     console.error('verify callback error', e)

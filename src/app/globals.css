@@ -1,10 +1,8 @@
-/* UNI MART theme — "Lagoon & Marigold"
-   Deep teal-ink header (trust, verified-safety) + warm marigold gold CTAs
-   (campus market energy, the color of a good deal), grounded in a warm
-   sand background. Signature: torn-corner "price tag" chip used for
-   prices, verified badges, and category tags -- a nod to the physical
-   swing-tags on secondhand/thrifted goods, which is what a lot of this
-   marketplace actually trades in. */
+/* UNI MART theme — "Midnight Market"
+   A cinematic, MovieBox-inspired dark UI: deep navy-ink surfaces, frosted
+   glass panels, and a vivid emerald→cyan gradient for primary actions.
+   Marigold gold is retained as the price / rating accent so deals still
+   pop against the dark, the way rating scores do on a streaming poster. */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -47,154 +45,322 @@
   --color-card: var(--card);
   --color-verified: var(--verified);
   --color-verified-foreground: var(--verified-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-:root {
-  --radius: 0.6rem;
+/* MovieBox-style dark is the default (no light mode). Values live in :root
+   AND .dark so the palette holds whether or not a theme class is present. */
+:root, .dark {
+  --radius: 0.7rem;
   --font-display: var(--font-space-grotesk);
   --font-body: var(--font-inter);
   --font-mono: var(--font-plex-mono);
 
-  /* Sand paper background, ink text */
-  --background: oklch(0.98 0.014 80);
-  --foreground: oklch(0.22 0.014 190);
-  --card: oklch(0.995 0.006 80);
-  --card-foreground: oklch(0.22 0.014 190);
-  --popover: oklch(0.995 0.006 80);
-  --popover-foreground: oklch(0.22 0.014 190);
+  color-scheme: dark;
 
-  /* Marigold gold — CTAs, prices, links, focus */
-  --primary: oklch(0.78 0.14 75);
-  --primary-foreground: oklch(0.2 0.03 195);
+  /* Deep navy-ink canvas + lifted panel surfaces */
+  --background: oklch(0.17 0.022 255);
+  --foreground: oklch(0.97 0.006 250);
+  --card: oklch(0.21 0.024 255);
+  --card-foreground: oklch(0.97 0.006 250);
+  --popover: oklch(0.20 0.024 255);
+  --popover-foreground: oklch(0.97 0.006 250);
 
-  /* Warm gold-tinted neutral for secondary surfaces */
-  --secondary: oklch(0.94 0.03 75);
-  --secondary-foreground: oklch(0.28 0.05 195);
+  /* Emerald→cyan — the streaming "Watch now" energy, used for CTAs & links */
+  --primary: oklch(0.74 0.15 168);
+  --primary-foreground: oklch(0.16 0.03 200);
 
-  --muted: oklch(0.95 0.012 80);
-  --muted-foreground: oklch(0.5 0.02 90);
+  /* Elevated glassy surface for secondary buttons / chips */
+  --secondary: oklch(0.27 0.026 255);
+  --secondary-foreground: oklch(0.96 0.006 250);
 
-  /* Deep lagoon teal — accents, hovers, header */
-  --accent: oklch(0.9 0.03 195);
-  --accent-foreground: oklch(0.24 0.045 195);
+  --muted: oklch(0.25 0.022 255);
+  --muted-foreground: oklch(0.70 0.018 250);
 
-  /* Terracotta — destructive/urgent, warmer than a stock red */
-  --destructive: oklch(0.58 0.18 35);
+  /* Cool cyan accent for hovers / highlights */
+  --accent: oklch(0.30 0.045 210);
+  --accent-foreground: oklch(0.97 0.006 250);
 
-  --border: oklch(0.89 0.018 80);
-  --input: oklch(0.91 0.014 80);
-  --ring: oklch(0.78 0.14 75);
+  /* Warm coral for destructive/urgent */
+  --destructive: oklch(0.62 0.2 25);
 
-  /* Palm green — verified / trust signal, used for the "Verified Seller" badge */
-  --verified: oklch(0.52 0.1 155);
-  --verified-foreground: oklch(0.98 0.01 155);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.74 0.15 168);
 
-  --chart-1: oklch(0.78 0.14 75);
-  --chart-2: oklch(0.4 0.06 195);
-  --chart-3: oklch(0.52 0.1 155);
-  --chart-4: oklch(0.58 0.18 35);
-  --chart-5: oklch(0.6 0.08 320);
+  /* Palm green — verified / trust badge (kept distinct from primary) */
+  --verified: oklch(0.68 0.15 152);
+  --verified-foreground: oklch(0.14 0.02 155);
 
-  --sidebar: oklch(0.98 0.014 80);
-  --sidebar-foreground: oklch(0.22 0.014 190);
-  --sidebar-primary: oklch(0.28 0.045 195);
-  --sidebar-primary-foreground: oklch(0.98 0.01 80);
-  --sidebar-accent: oklch(0.94 0.03 75);
-  --sidebar-accent-foreground: oklch(0.28 0.045 195);
-  --sidebar-border: oklch(0.89 0.018 80);
-  --sidebar-ring: oklch(0.78 0.14 75);
+  /* Marigold gold — prices & rating scores, poster-style pop on dark */
+  --gold: oklch(0.83 0.14 85);
+  --gold-foreground: oklch(0.20 0.03 60);
+
+  --chart-1: oklch(0.74 0.15 168);
+  --chart-2: oklch(0.66 0.12 210);
+  --chart-3: oklch(0.68 0.15 152);
+  --chart-4: oklch(0.83 0.14 85);
+  --chart-5: oklch(0.66 0.16 320);
+
+  /* Sidebar — a touch deeper than the canvas so it reads as its own plane */
+  --sidebar: oklch(0.15 0.022 255);
+  --sidebar-foreground: oklch(0.9 0.008 250);
+  --sidebar-primary: oklch(0.74 0.15 168);
+  --sidebar-primary-foreground: oklch(0.16 0.03 200);
+  --sidebar-accent: oklch(0.26 0.03 255);
+  --sidebar-accent-foreground: oklch(0.97 0.006 250);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.74 0.15 168);
 }
 
-.dark {
-  --background: oklch(0.17 0.024 195);
-  --foreground: oklch(0.95 0.012 80);
-  --card: oklch(0.21 0.03 195);
-  --card-foreground: oklch(0.95 0.012 80);
-  --popover: oklch(0.21 0.03 195);
-  --popover-foreground: oklch(0.95 0.012 80);
-  --primary: oklch(0.8 0.14 75);
-  --primary-foreground: oklch(0.18 0.03 195);
-  --secondary: oklch(0.3 0.035 195);
-  --secondary-foreground: oklch(0.95 0.012 80);
-  --muted: oklch(0.28 0.03 195);
-  --muted-foreground: oklch(0.72 0.015 90);
-  --accent: oklch(0.32 0.04 195);
-  --accent-foreground: oklch(0.95 0.012 80);
-  --destructive: oklch(0.65 0.19 35);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.8 0.14 75);
-  --verified: oklch(0.62 0.11 155);
-  --verified-foreground: oklch(0.15 0.02 155);
-  --chart-1: oklch(0.8 0.14 75);
-  --chart-2: oklch(0.65 0.05 195);
-  --chart-3: oklch(0.62 0.11 155);
-  --chart-4: oklch(0.65 0.19 35);
-  --chart-5: oklch(0.68 0.09 320);
-  --sidebar: oklch(0.21 0.03 195);
-  --sidebar-foreground: oklch(0.95 0.012 80);
-  --sidebar-primary: oklch(0.8 0.14 75);
-  --sidebar-primary-foreground: oklch(0.18 0.03 195);
-  --sidebar-accent: oklch(0.3 0.035 195);
-  --sidebar-accent-foreground: oklch(0.95 0.012 80);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.8 0.14 75);
+/* ------------------------------------------------------------------ *
+   LIGHT MODE — "Daylight Market"
+   Only the CONTENT-area tokens are re-declared here. The sidebar
+   (--sidebar-*) and the header (.amazon-header, hardcoded) are the app's
+   brand "chrome" and deliberately stay dark in both themes, so those
+   tokens are intentionally NOT overridden — they keep the dark values
+   from :root above. Shared frosted-glass utilities get light variants
+   further down.
+ * ------------------------------------------------------------------ */
+.light {
+  color-scheme: light;
+
+  /* Soft off-white canvas + clean white panels */
+  --background: oklch(0.985 0.003 250);
+  --foreground: oklch(0.23 0.02 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.23 0.02 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.23 0.02 258);
+
+  /* Emerald primary, nudged darker so it meets contrast on white */
+  --primary: oklch(0.6 0.14 168);
+  --primary-foreground: oklch(0.99 0.01 180);
+
+  --secondary: oklch(0.95 0.006 250);
+  --secondary-foreground: oklch(0.27 0.02 258);
+
+  --muted: oklch(0.96 0.005 250);
+  --muted-foreground: oklch(0.5 0.02 255);
+
+  --accent: oklch(0.95 0.02 200);
+  --accent-foreground: oklch(0.27 0.03 240);
+
+  --destructive: oklch(0.58 0.21 25);
+
+  --border: oklch(0.24 0.02 258 / 12%);
+  --input: oklch(0.24 0.02 258 / 16%);
+  --ring: oklch(0.6 0.14 168);
+
+  /* Palm-green verified badge, darkened for white backgrounds */
+  --verified: oklch(0.58 0.14 152);
+  --verified-foreground: oklch(0.99 0.01 150);
+
+  /* Gold stays for prices/ratings — dark text already reads on white */
+  --gold: oklch(0.8 0.14 85);
+  --gold-foreground: oklch(0.28 0.04 60);
+
+  --chart-1: oklch(0.6 0.14 168);
+  --chart-2: oklch(0.55 0.13 235);
+  --chart-3: oklch(0.58 0.14 152);
+  --chart-4: oklch(0.7 0.14 85);
+  --chart-5: oklch(0.55 0.17 320);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    color-scheme: dark;
+  }
+  html.light {
+    color-scheme: light;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Subtle radial glow behind everything so the flat navy has depth */
+    background-image:
+      radial-gradient(900px 500px at 12% -5%, oklch(0.74 0.15 168 / 0.10), transparent 60%),
+      radial-gradient(800px 500px at 105% 0%, oklch(0.66 0.14 265 / 0.10), transparent 55%);
+    background-attachment: fixed;
+  }
+  /* Lighter, cooler wash on light mode so white cards still lift off it */
+  html.light body {
+    background-image:
+      radial-gradient(900px 500px at 12% -5%, oklch(0.6 0.14 168 / 0.06), transparent 60%),
+      radial-gradient(800px 500px at 105% 0%, oklch(0.55 0.13 235 / 0.06), transparent 55%);
   }
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 }
 
-/* Deep lagoon header — trust anchor, holds the gold CTAs in contrast */
+/* ---- Frosted glass surfaces (the signature MovieBox feel) ---- */
+.glass {
+  background: oklch(0.99 0 0 / 0.045);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+.glass-panel {
+  background: oklch(0.20 0.024 255 / 0.68);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+.glass-card {
+  background: linear-gradient(180deg, oklch(0.99 0 0 / 0.055), oklch(0.99 0 0 / 0.02));
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+
+/* Light-mode glass: frosted surfaces sit on a light canvas, so switch the
+   tints from white-on-dark to a translucent white panel with a soft ink
+   border + shadow. Scoped to content only — the header search box lives
+   inside .amazon-header (dark chrome) and is excluded so it stays dark. */
+.light .glass:not(.amazon-header *) {
+  background: oklch(1 0 0 / 0.72);
+  border: 1px solid oklch(0.24 0.02 258 / 0.1);
+  box-shadow: 0 1px 3px oklch(0.24 0.02 258 / 0.06);
+}
+.light .glass-panel {
+  background: oklch(1 0 0 / 0.78);
+  border: 1px solid oklch(0.24 0.02 258 / 0.1);
+  box-shadow: 0 8px 30px -12px oklch(0.24 0.02 258 / 0.18);
+}
+.light .glass-card {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.85), oklch(1 0 0 / 0.7));
+  border: 1px solid oklch(0.24 0.02 258 / 0.1);
+  box-shadow: 0 4px 16px -8px oklch(0.24 0.02 258 / 0.12);
+}
+
+/* ---- Header + sidebar chrome ---- */
 .amazon-header {
-  background: linear-gradient(180deg, oklch(0.24 0.045 195) 0%, oklch(0.18 0.035 195) 100%);
+  background: oklch(0.15 0.022 255 / 0.72);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-bottom: 1px solid oklch(1 0 0 / 0.08);
 }
-
 .amazon-header-dark {
-  background: linear-gradient(180deg, oklch(0.15 0.03 195) 0%, oklch(0.11 0.025 195) 100%);
+  background: oklch(0.13 0.02 255);
 }
-
-/* Warm gold-to-terracotta bar for promos/deal rails */
 .amazon-accent-bar {
-  background: linear-gradient(90deg, oklch(0.78 0.14 75) 0%, oklch(0.62 0.16 45) 100%);
+  background: linear-gradient(90deg, oklch(0.74 0.15 168) 0%, oklch(0.66 0.13 210) 100%);
 }
 
-/* Custom scrollbar */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Emerald→cyan gradient used on the primary "Watch now"-style CTAs */
+.cta-gradient {
+  background-image: linear-gradient(100deg, oklch(0.78 0.16 165) 0%, oklch(0.72 0.13 205) 100%);
+  color: oklch(0.15 0.03 200);
+  border: none;
+  transition: filter 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+.cta-gradient:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 8px 24px -8px oklch(0.74 0.15 175 / 0.6);
 }
+.cta-gradient:active { transform: translateY(1px); }
+
+/* Gold pill used for the premium / upgrade action */
+.cta-gold {
+  background-image: linear-gradient(100deg, oklch(0.88 0.13 90) 0%, oklch(0.82 0.14 70) 100%);
+  color: oklch(0.2 0.03 60);
+  border: none;
+}
+
+/* Custom scrollbar — slim, emerald thumb */
+.scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: oklch(0.6 0.14 75 / 0.45);
+  background: oklch(0.74 0.15 168 / 0.4);
   border-radius: 4px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.6 0.14 75 / 0.75);
+  background: oklch(0.74 0.15 168 / 0.7);
 }
 
-/* Card hover effect (Amazon product card style), tinted with the lagoon ink */
+/* ---- Poster-style product card ---- */
 .product-card {
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  background: linear-gradient(180deg, oklch(0.99 0 0 / 0.05), oklch(0.99 0 0 / 0.015));
+  border: 1px solid oklch(1 0 0 / 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 26px -10px oklch(0.24 0.045 195 / 0.35);
-  border-color: oklch(0.78 0.14 75 / 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px -18px oklch(0 0 0 / 0.7), 0 0 0 1px oklch(0.74 0.15 168 / 0.35);
+  border-color: oklch(0.74 0.15 168 / 0.5);
+}
+
+/* Light-mode poster card: white surface, soft ink border, gentler hover */
+.light .product-card {
+  background: oklch(1 0 0);
+  border: 1px solid oklch(0.24 0.02 258 / 0.1);
+}
+.light .product-card:hover {
+  box-shadow: 0 18px 40px -20px oklch(0.24 0.02 258 / 0.35), 0 0 0 1px oklch(0.6 0.14 168 / 0.4);
+  border-color: oklch(0.6 0.14 168 / 0.5);
+}
+/* The card's Cart button uses white tints for dark mode; give it real
+   contrast on white without touching the dark-mode look. */
+.light .product-card .border-white\/15 {
+  border-color: oklch(0.24 0.02 258 / 0.15) !important;
+}
+.light .product-card .bg-white\/5 {
+  background-color: oklch(0.96 0.005 250) !important;
+}
+
+/* Rating chip that sits on a poster corner (MovieBox score badge) */
+.rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.4rem;
+  color: var(--gold);
+  background: oklch(0.12 0.02 255 / 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid oklch(0.83 0.14 85 / 0.35);
+}
+
+/* Image fallback shimmer / gradient for cards with no photo */
+.poster-fallback {
+  background:
+    radial-gradient(120% 90% at 50% 0%, oklch(0.3 0.05 200 / 0.6), transparent 70%),
+    linear-gradient(160deg, oklch(0.26 0.03 255), oklch(0.19 0.02 255));
+}
+
+/* ---- Sidebar nav items ---- */
+.nav-item {
+  position: relative;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.nav-item:hover { background: oklch(1 0 0 / 0.06); }
+.nav-item[data-active="true"] {
+  background: linear-gradient(90deg, oklch(0.74 0.15 168 / 0.18), transparent);
+  color: var(--foreground);
+}
+.nav-item[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  height: 60%;
+  width: 3px;
+  transform: translateY(-50%);
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, oklch(0.78 0.16 165), oklch(0.72 0.13 205));
 }
 
 /* Marquee for promotions */
@@ -202,24 +368,16 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
+.animate-marquee { animation: marquee 30s linear infinite; }
 
-/* Pulse for notification badges — now gold instead of purple */
+/* Pulse for notification badges */
 @keyframes pulse-purple {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.78 0.14 75 / 0.55); }
-  50% { box-shadow: 0 0 0 8px oklch(0.78 0.14 75 / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.74 0.15 168 / 0.55); }
+  50% { box-shadow: 0 0 0 8px oklch(0.74 0.15 168 / 0); }
 }
-.pulse-purple {
-  animation: pulse-purple 2s ease-in-out infinite;
-}
+.pulse-purple { animation: pulse-purple 2s ease-in-out infinite; }
 
-/* --- Signature element: the "swing tag" ---
-   A price/status chip shaped like a physical price tag: a small punched
-   hole on the left, a notched right edge. Used for prices, "Verified
-   Seller", and category filters -- ties the visual language back to
-   secondhand goods actually being tagged and traded. */
+/* ---- Signature "swing tag" price chip (recolored gold for dark) ---- */
 .price-tag {
   position: relative;
   display: inline-flex;
@@ -229,8 +387,8 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   padding: 0.2rem 0.65rem 0.2rem 1.15rem;
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--gold);
+  color: var(--gold-foreground);
   clip-path: polygon(6px 0, 100% 0, 100% 100%, 6px 100%, 0 50%);
   border-radius: 2px;
 }
@@ -242,22 +400,23 @@
   width: 3px;
   height: 3px;
   border-radius: 999px;
-  background: var(--primary-foreground);
+  background: var(--gold-foreground);
   opacity: 0.55;
   transform: translateY(-50%);
 }
 .price-tag.price-tag-outline {
   background: transparent;
   color: var(--foreground);
-  border: 1.5px dashed oklch(0.6 0.03 90);
+  border: 1.5px dashed oklch(0.7 0.03 90 / 0.6);
 }
-.price-tag.price-tag-outline::before {
-  background: var(--foreground);
-}
+.price-tag.price-tag-outline::before { background: var(--foreground); }
 .price-tag.price-tag-verified {
   background: var(--verified);
   color: var(--verified-foreground);
 }
-.price-tag.price-tag-verified::before {
-  background: var(--verified-foreground);
+.price-tag.price-tag-verified::before { background: var(--verified-foreground); }
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card, .cta-gradient, .nav-item { transition: none; }
+  .animate-marquee, .pulse-purple { animation: none; }
 }

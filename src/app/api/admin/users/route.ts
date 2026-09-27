@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
+import { getUserDeletionBlockers, hardDeleteUser } from '@/lib/account-deletion'
 
 export async function GET() {
   try {
@@ -65,4 +66,63 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true })
+}
+
+// Permanently delete a user and everything tied to them. Irreversible.
+export async function DELETE(req: Request) {
+  let admin
+  try {
+    admin = await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  }
+
+  const { userId } = await req.json()
+  if (!userId) return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+
+  if (userId === admin.id) {
+    return NextResponse.json({ error: 'You can\'t delete your own account while signed in as it.' }, { status: 400 })
+  }
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { fullName: true, email: true, isAdmin: true },
+  })
+  if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  // Never let one admin delete another — force an explicit "remove admin" step
+  // first, so a demotion is always a separate, deliberate decision.
+  if (target.isAdmin) {
+    return NextResponse.json(
+      { error: 'This is an admin account. Remove their admin access first, then delete.' },
+      { status: 400 }
+    )
+  }
+
+  const blockers = await getUserDeletionBlockers(userId)
+  if (blockers.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Can't delete this account yet — ${blockers.join('; ')}. Settle or refund those first, or ban the account instead.`,
+      },
+      { status: 409 }
+    )
+  }
+
+  try {
+    await hardDeleteUser(userId)
+  } catch (e: any) {
+    console.error('hard-delete user failed', e)
+    return NextResponse.json({ error: 'Could not delete this account. Nothing was changed.' }, { status: 500 })
+  }
+
+  await logAudit({
+    actor: admin,
+    action: 'user.delete',
+    targetType: 'User',
+    targetId: userId,
+    detail: `Permanently deleted ${target.fullName} (${target.email})`,
+  })
+
+  return NextResponse.json({ ok: true, message: 'Account permanently deleted' })
 }

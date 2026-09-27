@@ -12,6 +12,20 @@ function getResendClient(): Resend | null {
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || 'UNI MART <onboarding@resend.dev>'
 
+/**
+ * True when a real email provider key is configured, so callers/UI can tell
+ * whether sendEmail() will actually deliver or silently no-op. Also reports
+ * whether a custom From address is set — without one, Resend's shared sandbox
+ * sender (`onboarding@resend.dev`) only delivers to the Resend account owner's
+ * own verified address, which is the usual reason "no email arrives" in a
+ * fresh setup.
+ */
+export function isEmailConfigured(): { enabled: boolean; usingSandboxSender: boolean } {
+  const enabled = !!process.env.RESEND_API_KEY
+  const usingSandboxSender = !process.env.EMAIL_FROM
+  return { enabled, usingSandboxSender }
+}
+
 export async function sendEmail(params: { to: string; subject: string; html: string }) {
   const client = getResendClient()
   if (!client) {

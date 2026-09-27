@@ -12,8 +12,8 @@ export function Footer() {
   }
 
   return (
-    <footer className="mt-auto bg-primary text-primary-foreground">
-      <div className="amazon-header-dark">
+    <footer className="mt-auto bg-sidebar text-white border-t border-white/10">
+      <div className="amazon-header-dark border-b border-white/5">
         <button
           onClick={() => setView({ name: 'home' })}
           className="w-full text-center py-4 hover:bg-white/5 transition text-sm font-medium"

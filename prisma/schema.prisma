@@ -148,6 +148,7 @@ model Product {
   storefront      Storefront @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
   // Status: "active" | "out_of_stock" | "paused" | "removed"
   status          String   @default("active")
+  deliveryNotes   String?  // seller's delivery/pickup arrangement for this specific listing
   rating          Float    @default(0)
   reviewCount     Int      @default(0)
   views           Int      @default(0)

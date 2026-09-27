@@ -6,6 +6,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { Sidebar } from '@/components/sidebar'
 import { AuthModal } from '@/components/auth-modal'
 import { ToastStack } from '@/components/toast-stack'
 import { HomePage } from '@/views/home'
@@ -113,7 +114,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mx-auto" />
+          <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin mx-auto" />
           <p className="mt-4 text-sm text-muted-foreground">Loading UNI MART…</p>
         </div>
       </div>
@@ -121,38 +122,43 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      <main className="flex-1">
-        {view.name === 'home' && <HomePage />}
-        {view.name === 'category' && <CategoryPage slug={view.slug} name={view.categoryName} />}
-        {view.name === 'product' && <ProductPage productId={view.id} />}
-        {view.name === 'search' && <SearchPage q={view.q} />}
-        {view.name === 'sell' && <SellPage />}
-        {view.name === 'storefront' && <StorefrontPage />}
-        {view.name === 'storefrontView' && <StorefrontViewPage ownerId={view.ownerId} />}
-        {view.name === 'orders' && <OrdersPage />}
-        {view.name === 'inbox' && <InboxPage />}
-        {view.name === 'inboxThread' && <InboxThreadPage conversationId={view.conversationId} />}
-        {view.name === 'profile' && <ProfilePage />}
-        {view.name === 'admin' && <AdminPage />}
-        {view.name === 'agreement' && <AgreementPage />}
-        {view.name === 'setup-storefront' && <SetupStorefrontPage />}
-        {view.name === 'about' && <AboutPage />}
-        {view.name === 'campus-safety' && <CampusSafetyPage />}
-        {view.name === 'service-charge' && <ServiceChargePage />}
-        {view.name === 'sustainability' && <SustainabilityPage />}
-        {view.name === 'dispute-resolution' && <DisputeResolutionPage />}
-        {view.name === 'report-user' && <ReportUserPage />}
-        {view.name === 'protect-account' && <ProtectAccountPage />}
-        {view.name === 'feedback' && <FeedbackPage />}
-        {view.name === 'delivery-partner-register' && <DeliveryPartnerRegisterPage />}
-        {view.name === 'deliveries' && <DeliveriesPage />}
-        {view.name === 'hr-queue' && <HRQueuePage />}
-        {view.name === 'reset-password' && <ResetPasswordPage token={view.token} />}
-        {view.name === 'privacy-policy' && <PrivacyPolicyPage />}
-      </main>
-      <Footer />
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      {/* Constant rail-width padding: the sidebar expands on hover as a fixed
+          overlay, so content must NOT reflow with it — keep this at 76px. */}
+      <div className="flex flex-col min-h-screen lg:pl-[76px]">
+        <Header />
+        <main className="flex-1">
+          {view.name === 'home' && <HomePage />}
+          {view.name === 'category' && <CategoryPage slug={view.slug} name={view.categoryName} />}
+          {view.name === 'product' && <ProductPage productId={view.id} />}
+          {view.name === 'search' && <SearchPage q={view.q} />}
+          {view.name === 'sell' && <SellPage />}
+          {view.name === 'storefront' && <StorefrontPage />}
+          {view.name === 'storefrontView' && <StorefrontViewPage ownerId={view.ownerId} />}
+          {view.name === 'orders' && <OrdersPage />}
+          {view.name === 'inbox' && <InboxPage />}
+          {view.name === 'inboxThread' && <InboxThreadPage conversationId={view.conversationId} />}
+          {view.name === 'profile' && <ProfilePage />}
+          {view.name === 'admin' && <AdminPage />}
+          {view.name === 'agreement' && <AgreementPage />}
+          {view.name === 'setup-storefront' && <SetupStorefrontPage />}
+          {view.name === 'about' && <AboutPage />}
+          {view.name === 'campus-safety' && <CampusSafetyPage />}
+          {view.name === 'service-charge' && <ServiceChargePage />}
+          {view.name === 'sustainability' && <SustainabilityPage />}
+          {view.name === 'dispute-resolution' && <DisputeResolutionPage />}
+          {view.name === 'report-user' && <ReportUserPage />}
+          {view.name === 'protect-account' && <ProtectAccountPage />}
+          {view.name === 'feedback' && <FeedbackPage />}
+          {view.name === 'delivery-partner-register' && <DeliveryPartnerRegisterPage />}
+          {view.name === 'deliveries' && <DeliveriesPage />}
+          {view.name === 'hr-queue' && <HRQueuePage />}
+          {view.name === 'reset-password' && <ResetPasswordPage token={view.token} />}
+          {view.name === 'privacy-policy' && <PrivacyPolicyPage />}
+        </main>
+        <Footer />
+      </div>
       <AuthModal open={authModalOpen} onOpenChange={(o) => {
         setAuthModalOpen(o)
         if (!o && !user) {

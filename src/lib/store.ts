@@ -54,6 +54,18 @@ type CartItem = {
   image?: string
 }
 
+export type Theme = 'dark' | 'light'
+
+// Reflect the chosen theme onto <html> so the CSS token blocks (:root/.dark
+// vs .light) take effect. Dark is the default and needs no class, but we add
+// an explicit `dark` class too so the state is always unambiguous.
+function applyThemeClass(theme: Theme) {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement
+  root.classList.toggle('light', theme === 'light')
+  root.classList.toggle('dark', theme === 'dark')
+}
+
 type Store = {
   user: SessionUser | null
   setUser: (u: SessionUser | null) => void
@@ -75,6 +87,17 @@ type Store = {
 
   cartOpen: boolean
   setCartOpen: (v: boolean) => void
+
+  // Sidebar navigation
+  sidebarOpen: boolean        // mobile drawer
+  setSidebarOpen: (v: boolean) => void
+  sidebarCollapsed: boolean   // desktop rail vs full
+  toggleSidebarCollapsed: () => void
+
+  // Theme (dark is default; light is opt-in and persisted)
+  theme: Theme
+  setTheme: (t: Theme) => void
+  toggleTheme: () => void
 
   // Toast notifications
   toasts: { id: string; title: string; description?: string; variant?: 'default' | 'success' | 'error' }[]
@@ -127,6 +150,19 @@ export const useStore = create<Store>()(
       cartOpen: false,
       setCartOpen: (v) => set({ cartOpen: v }),
 
+      sidebarOpen: false,
+      setSidebarOpen: (v) => set({ sidebarOpen: v }),
+      sidebarCollapsed: false,
+      toggleSidebarCollapsed: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
+
+      theme: 'dark',
+      setTheme: (t) => { applyThemeClass(t); set({ theme: t }) },
+      toggleTheme: () => {
+        const next: Theme = get().theme === 'dark' ? 'light' : 'dark'
+        applyThemeClass(next)
+        set({ theme: next })
+      },
+
       toasts: [],
       toast: (t) => {
         const id = Math.random().toString(36).slice(2)
@@ -139,7 +175,13 @@ export const useStore = create<Store>()(
     }),
     {
       name: 'unimart-storage',
-      partialize: (s) => ({ cart: s.cart }) as any,
+      partialize: (s) => ({ cart: s.cart, sidebarCollapsed: s.sidebarCollapsed, theme: s.theme }) as any,
+      // When the persisted state loads on the client, push the saved theme
+      // onto <html> so a returning light-mode user doesn't get a dark flash
+      // beyond the pre-paint script's best guess.
+      onRehydrateStorage: () => (state) => {
+        if (state?.theme) applyThemeClass(state.theme)
+      },
     }
   )
 )

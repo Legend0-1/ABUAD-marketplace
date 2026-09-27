@@ -45,17 +45,35 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#153B3D",
+  themeColor: "#0b1220",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${plexMono.variable} antialiased bg-background text-foreground min-h-screen`}
       >
+        {/* Apply the saved theme before paint to avoid a flash. Reads the
+            persisted zustand store (localStorage key "unimart-storage"); if the
+            user picked light last time, swap the html class synchronously.
+            Defaults to dark (the class already on <html>) on any error. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var raw = localStorage.getItem('unimart-storage');
+                var theme = raw && JSON.parse(raw).state && JSON.parse(raw).state.theme;
+                if (theme === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
         {children}
         <Toaster />
         <SonnerToaster richColors position="top-right" />

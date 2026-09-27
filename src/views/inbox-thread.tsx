@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ChevronLeft, Send, ShieldCheck, Loader2 } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
+import { toast } from 'sonner'
 
 export function InboxThreadPage({ conversationId }: { conversationId: string }) {
   const { user, setView } = useStore()
@@ -72,7 +73,7 @@ export function InboxThreadPage({ conversationId }: { conversationId: string }) 
     if (error) {
       setMessages((m) => m.filter((x) => x.id !== optimistic.id))
       setDraft(body)
-      alert(error)
+      toast.error(error)
       return
     }
     // Emit to socket so the other party (if online) gets a push

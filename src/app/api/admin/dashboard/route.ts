@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
+import { isEmailConfigured } from '@/lib/email'
 
 export async function GET() {
   try {
@@ -66,6 +67,7 @@ export async function GET() {
       totalMessages,
       pendingApprovals,
     },
+    email: isEmailConfigured(),
     recentOrders,
     categories,
   })

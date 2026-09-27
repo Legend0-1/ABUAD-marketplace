@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/session'
-
-// Admin sends an email to a user — simulated (no real SMTP in sandbox).
-// We record the intent in the response and also create an admin_direct inbox message.
 import { db } from '@/lib/db'
+import { sendEmail, isEmailConfigured } from '@/lib/email'
 
+// Admin sends an email to a user.
+//  1. Always records the message as an admin_direct inbox conversation, so the
+//     user sees it in-app even when outbound email isn't configured.
+//  2. If a real email provider is configured (RESEND_API_KEY set), it ALSO
+//     sends the message to the user's real email address. When it isn't, we say
+//     so plainly in the response instead of pretending it was sent.
 export async function POST(req: NextRequest) {
+  let admin
   try {
-    const admin = await requireAdmin()
+    admin = await requireAdmin()
   } catch {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
@@ -17,20 +22,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User, subject and body required' }, { status: 400 })
   }
 
-  const admin = await db.user.findFirst({ where: { isAdmin: true } })
-  if (!admin) return NextResponse.json({ error: 'No admin user' }, { status: 500 })
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, fullName: true },
+  })
+  if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  // Create admin_direct conversation & message (acts as email inbox in-app)
+  // Always deliver in-app: find or create the admin_direct conversation.
   let conv = await db.conversation.findFirst({
     where: { type: 'admin_direct', participantAId: admin.id, participantBId: userId },
   })
   if (!conv) {
     conv = await db.conversation.create({
-      data: { type: 'admin_direct', participantAId: admin.id, participantBId: userId, subject: subject },
+      data: { type: 'admin_direct', participantAId: admin.id, participantBId: userId, subject },
     })
   }
-
-  const message = await db.message.create({
+  await db.message.create({
     data: {
       conversationId: conv.id,
       senderId: admin.id,
@@ -38,5 +45,33 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  return NextResponse.json({ ok: true, message: 'Email sent (simulated — also delivered to user inbox).' })
+  // Also send a real email when configured. Plain paragraphs -> HTML.
+  const { enabled, usingSandboxSender } = isEmailConfigured()
+  let emailNote = 'Outbound email is not configured, so this was delivered to the user\'s in-app inbox only.'
+  if (enabled) {
+    const html = body
+      .split('\n')
+      .map((line: string) => (line.trim() ? `<p>${escapeHtml(line)}</p>` : '<br/>'))
+      .join('')
+    const result: any = await sendEmail({ to: target.email, subject, html })
+    if (result?.error) {
+      emailNote = 'Saved to the user\'s inbox, but the email provider returned an error — check server logs.'
+    } else if (result?.skipped) {
+      emailNote = 'Outbound email is not configured, so this was delivered to the user\'s in-app inbox only.'
+    } else {
+      emailNote = usingSandboxSender
+        ? 'Email sent via the Resend sandbox sender (note: the sandbox only delivers to your own verified Resend address — set EMAIL_FROM with a verified domain to reach any user).'
+        : `Email sent to ${target.email} and saved to their in-app inbox.`
+    }
+  }
+
+  return NextResponse.json({ ok: true, message: emailNote })
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }

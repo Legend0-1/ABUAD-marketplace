@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack'
+import { decrementStockForPaidOrder } from '@/lib/inventory'
 
 // Configure this exact URL in Paystack Dashboard > Settings > API Keys & Webhooks:
 //   https://<your-domain>/api/payments/webhook
@@ -31,11 +32,15 @@ export async function POST(req: NextRequest) {
         console.error(`Amount mismatch for order ${order.id}: paid ${paidNaira}, expected ${order.totalAmount}`)
         return NextResponse.json({ received: true })
       }
-      if (order.status === 'pending') {
-        await db.order.update({
-          where: { id: order.id },
-          data: { status: 'paid', paidAt: new Date() },
-        })
+      // Atomically flip pending -> paid. The status guard in updateMany means
+      // only ONE of {this webhook, the browser verify callback} actually
+      // performs the transition, so stock is decremented exactly once.
+      const flip = await db.order.updateMany({
+        where: { id: order.id, status: 'pending' },
+        data: { status: 'paid', paidAt: new Date() },
+      })
+      if (flip.count === 1) {
+        await decrementStockForPaidOrder(order.id)
       }
       return NextResponse.json({ received: true })
     }

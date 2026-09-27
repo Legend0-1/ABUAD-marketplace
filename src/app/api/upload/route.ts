@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/session'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // Upload media (image/video/audio) as a base64 data URL.
 // Frontend sends { type, dataUrl } and we just validate & echo back.
@@ -7,6 +8,9 @@ import { getCurrentUser } from '@/lib/session'
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = await checkRateLimit(req, 'upload')
+  if (!rl.allowed) return NextResponse.json({ error: 'Too many uploads. Please wait a moment and try again.' }, { status: 429 })
 
   const body = await req.json()
   const { type, dataUrl } = body

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { sendNewOrderEmail } from '@/lib/email'
 import { sendNewOrderSms } from '@/lib/sms'
 
@@ -8,6 +9,9 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const rl = await checkRateLimit(req, 'createOrder')
+    if (!rl.allowed) return NextResponse.json({ error: 'Too many orders in a short time. Please wait a moment.' }, { status: 429 })
 
     const { productId, quantity = 1, deliveryAddress, deliveryNotes } = await req.json()
 

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
   Users, Store, Package, MessageSquare, AlertTriangle, Banknote, TrendingUp,
-  CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star, Phone,
+  CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star, Phone, Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminAgreementManager } from '@/components/admin-agreement-manager'
@@ -135,6 +135,26 @@ export function AdminPage() {
               </Button>
             </div>
           </div>
+          {stats?.email && (
+            <div className={`rounded-lg p-3 flex items-start gap-2 border ${stats.email.enabled ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/30' : 'bg-red-50 dark:bg-red-950/30 border-red-500/30'}`}>
+              <Mail className={`w-4 h-4 mt-0.5 shrink-0 ${stats.email.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`} />
+              <div className="text-xs flex-1 min-w-0">
+                {!stats.email.enabled ? (
+                  <p className="text-red-700 dark:text-red-400">
+                    <strong>Email delivery is OFF.</strong> No verification, password-reset, order, or admin emails are being sent — the app just logs them. Set <code>RESEND_API_KEY</code> (and <code>EMAIL_FROM</code>) in your environment to turn real email on. See the Email Setup Guide in the project root.
+                  </p>
+                ) : stats.email.usingSandboxSender ? (
+                  <p className="text-emerald-700 dark:text-emerald-400">
+                    <strong>Email is ON — sandbox mode.</strong> Emails send via Resend's shared sender, which only delivers to your own verified Resend address. Set <code>EMAIL_FROM</code> to an address on a domain you've verified in Resend to reach real users (this is why temp-mail signups get nothing).
+                  </p>
+                ) : (
+                  <p className="text-emerald-700 dark:text-emerald-400">
+                    <strong>Email delivery is ON.</strong> Verification, password-reset, order, and admin emails are being sent to real addresses.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <StatCard icon={Users} label="Total Users" value={stats?.totalUsers || 0} />
             <StatCard icon={Store} label="Storefronts" value={stats?.totalStorefronts || 0} sub={`${stats?.pendingStorefronts || 0} pending`} />
@@ -229,6 +249,13 @@ export function AdminPage() {
                     reload()
                   }}><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve</Button>
                 )}
+                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={async () => {
+                  if (!confirm(`PERMANENTLY delete the storefront "${s.name}"?\n\nThis erases the storefront, all its listings and their reviews/comments, and its order history from the database. The owner's account stays. This CANNOT be undone.`)) return
+                  const { error } = await api('/api/admin/storefronts', { method: 'DELETE', body: { storefrontId: s.id } })
+                  if (error) { toast.error(error); return }
+                  toast.success('Storefront permanently deleted')
+                  reload()
+                }}><Trash2 className="w-3.5 h-3.5 mr-1" /> Delete</Button>
               </div>
             </div>
           ))}
@@ -338,6 +365,15 @@ export function AdminPage() {
                               toast.success('HR access granted')
                               reload()
                             }}>Make HR</Button>
+                          )}
+                          {!u.isAdmin && (
+                            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={async () => {
+                              if (!confirm(`PERMANENTLY delete ${u.fullName} (${u.email})?\n\nThis erases their account, storefront, listings, reviews, comments, messages and order history from the database. This CANNOT be undone.`)) return
+                              const { error } = await api('/api/admin/users', { method: 'DELETE', body: { userId: u.id } })
+                              if (error) { toast.error(error); return }
+                              toast.success('Account permanently deleted')
+                              reload()
+                            }}><Trash2 className="w-3.5 h-3.5 mr-1" /> Delete</Button>
                           )}
                         </div>
                       </td>

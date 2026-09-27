@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare, Search, ShieldCheck, Send, Inbox as InboxIcon, ChevronRight, X } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
+import { toast } from 'sonner'
 
 export function InboxPage() {
   const { user, setView, setAuthModalOpen } = useStore()
@@ -74,7 +75,7 @@ export function InboxPage() {
       method: 'POST',
       body: { otherUserId: newChatUserId.trim(), body: 'Hi! I wanted to reach out.' },
     })
-    if (error) { alert(error); return }
+    if (error) { toast.error(error); return }
     setNewChatUserId('')
     setView({ name: 'inboxThread', conversationId: data.conversationId })
   }

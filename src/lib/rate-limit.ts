@@ -20,6 +20,13 @@ const limiters = redis ? {
   register: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(15, '1 h'), prefix: 'rl:register' }),
   forgotPassword: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(4, '1 h'), prefix: 'rl:forgot-password' }),
   resendVerification: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(4, '1 h'), prefix: 'rl:resend-verification' }),
+  // Write endpoints — generous enough for real students, tight enough to blunt
+  // scripted spam/abuse. All fail open if Upstash isn't configured.
+  upload: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(40, '10 m'), prefix: 'rl:upload' }),
+  sendMessage: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60, '5 m'), prefix: 'rl:send-message' }),
+  createOrder: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20, '10 m'), prefix: 'rl:create-order' }),
+  review: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(15, '10 m'), prefix: 'rl:review' }),
+  report: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, '1 h'), prefix: 'rl:report' }),
 } : null
 
 export type RateLimitKey = keyof NonNullable<typeof limiters>
