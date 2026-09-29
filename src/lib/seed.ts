@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { db } from './db'
 
 // Default categories required by the UNI MART platform spec.
@@ -186,10 +187,17 @@ export async function seedDefaults() {
   const existingAdmin = await db.user.findUnique({ where: { email: adminEmail } })
   if (!existingAdmin) {
     const { hashPassword } = await import('./auth')
+    // Never seed a hardcoded admin password. Use ADMIN_INITIAL_PASSWORD if set;
+    // otherwise generate a strong random one and log it once so the operator
+    // can sign in and change it.
+    const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || crypto.randomBytes(12).toString('base64url')
+    if (!process.env.ADMIN_INITIAL_PASSWORD) {
+      console.warn(`[seed] Created initial admin "${adminEmail}" with a generated password: ${adminPassword}\n[seed] Sign in and change it immediately. Set ADMIN_INITIAL_PASSWORD to control this value.`)
+    }
     await db.user.create({
       data: {
         email: adminEmail,
-        passwordHash: hashPassword('admin1234'),
+        passwordHash: hashPassword(adminPassword),
         fullName: 'UNI MART Admin',
         matricNumber: 'ADMIN-0001',
         level: 'Staff',

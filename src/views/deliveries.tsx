@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ChevronRight, Truck, Plus, Loader2, MessageSquare, CheckCircle2, X, Send } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ChevronRight, Truck, Plus, Loader2, MessageSquare, CheckCircle2, X, Send, ShieldCheck, Star } from 'lucide-react'
 import { toast } from 'sonner'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -107,21 +108,57 @@ export function DeliveriesPage() {
   )
 }
 
+type Partner = {
+  id: string
+  fullName: string
+  profilePicture?: string | null
+  deliveryFee: number
+  note?: string | null
+  trustScore: number
+  typeAEligible: boolean
+  jobsCount: number
+}
+
 function NewRequestForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [type, setType] = useState<'buy_and_deliver' | 'errand_only'>('errand_only')
   const [description, setDescription] = useState('')
   const [dropoffLocation, setDropoffLocation] = useState('')
   const [itemCost, setItemCost] = useState('')
-  const [serviceFee, setServiceFee] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [flatFee, setFlatFee] = useState(1000)
+  const [loadingPartners, setLoadingPartners] = useState(true)
+  const [partnerId, setPartnerId] = useState('')
+
+  // Re-fetch partners whenever the job type changes: buy_and_deliver only lists
+  // Type-A–eligible partners, so the available set differs.
+  useEffect(() => {
+    let cancelled = false
+    setLoadingPartners(true)
+    setPartnerId('')
+    api<{ partners: Partner[]; flatFee: number }>('/api/delivery/partners', { query: { type } })
+      .then(({ data }) => {
+        if (cancelled) return
+        setPartners(data?.partners || [])
+        if (typeof data?.flatFee === 'number') setFlatFee(data.flatFee)
+      })
+      .finally(() => { if (!cancelled) setLoadingPartners(false) })
+    return () => { cancelled = true }
+  }, [type])
+
+  const selected = partners.find((p) => p.id === partnerId)
+  const itemCostNum = type === 'buy_and_deliver' ? Number(itemCost) || 0 : 0
+  const total = (selected?.deliveryFee || 0) + flatFee + itemCostNum
+
   const submit = async () => {
-    if (!description.trim() || !dropoffLocation.trim() || !serviceFee) { toast.error('Fill in all required fields'); return }
-    if (type === 'buy_and_deliver' && !itemCost) { toast.error('Item cost is required for buy & deliver'); return }
+    if (!description.trim() || !dropoffLocation.trim()) { toast.error('Fill in all required fields'); return }
+    if (type === 'buy_and_deliver' && (!itemCost || Number(itemCost) <= 0)) { toast.error('Item cost is required for buy & deliver'); return }
+    if (!partnerId) { toast.error('Please choose a delivery partner'); return }
     setSubmitting(true)
     const { data, error } = await api('/api/delivery/requests/create', {
       method: 'POST',
-      body: { type, description, dropoffLocation, itemCost: type === 'buy_and_deliver' ? itemCost : undefined, serviceFee },
+      body: { type, description, dropoffLocation, itemCost: type === 'buy_and_deliver' ? itemCost : undefined, partnerId },
     })
     if (error) { toast.error(error); setSubmitting(false); return }
 
@@ -157,27 +194,81 @@ function NewRequestForm({ onClose, onCreated }: { onClose: () => void; onCreated
         <Input value={dropoffLocation} onChange={(e) => setDropoffLocation(e.target.value)} placeholder="e.g. Male Hostel Block C, Room 14" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {type === 'buy_and_deliver' && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Item cost (₦)</Label>
-            <Input type="number" value={itemCost} onChange={(e) => setItemCost(e.target.value)} />
+      {type === 'buy_and_deliver' && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">Item cost (₦)</Label>
+          <Input type="number" value={itemCost} onChange={(e) => setItemCost(e.target.value)} placeholder="What the item costs to buy" />
+        </div>
+      )}
+
+      {/* Choose a partner (replaces the old "how much will you pay?" input) */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Choose a delivery partner</Label>
+        {loadingPartners ? (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground py-4 justify-center">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading available partners…
+          </div>
+        ) : partners.length === 0 ? (
+          <div className="text-xs text-muted-foreground bg-muted/50 border rounded p-3">
+            No delivery partners are available for this option right now. Please check back shortly.
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-72 overflow-y-auto scrollbar-thin pr-1">
+            {partners.map((p) => {
+              const active = p.id === partnerId
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPartnerId(p.id)}
+                  className={`w-full text-left flex items-center gap-3 rounded-lg border p-2.5 transition ${active ? 'border-primary ring-1 ring-primary bg-primary/5' : 'hover:bg-accent/40'}`}
+                >
+                  <Avatar className="w-9 h-9 shrink-0">
+                    <AvatarImage src={p.profilePicture || undefined} />
+                    <AvatarFallback>{p.fullName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium truncate">{p.fullName}</p>
+                      {p.typeAEligible && <ShieldCheck className="w-3.5 h-3.5 text-verified shrink-0" />}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {p.jobsCount} job{p.jobsCount === 1 ? '' : 's'}
+                      {p.trustScore > 0 && <> · <Star className="w-3 h-3 inline -mt-0.5" /> {p.trustScore}</>}
+                      {p.note ? ` · ${p.note}` : ''}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-primary">₦{p.deliveryFee.toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">their fee</p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         )}
-        <div className="space-y-1.5">
-          <Label className="text-xs">Service fee (₦)</Label>
-          <Input type="number" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} placeholder="What you'll pay the partner" />
-        </div>
       </div>
+
+      {/* Transparent fee breakdown */}
+      {selected && (
+        <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
+          <div className="flex justify-between"><span className="text-muted-foreground">Partner fee ({selected.fullName})</span><span>₦{selected.deliveryFee.toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Platform delivery fee</span><span>₦{flatFee.toLocaleString()}</span></div>
+          {type === 'buy_and_deliver' && itemCostNum > 0 && (
+            <div className="flex justify-between"><span className="text-muted-foreground">Item cost</span><span>₦{itemCostNum.toLocaleString()}</span></div>
+          )}
+          <div className="flex justify-between font-bold border-t pt-1 mt-1"><span>Total to pay</span><span>₦{total.toLocaleString()}</span></div>
+        </div>
+      )}
 
       <p className="text-xs text-muted-foreground">
         {type === 'buy_and_deliver'
-          ? "You'll pay the item cost + service fee upfront. HR assigns a partner, and once they confirm availability, the item cost is released to them to make the purchase. The service fee is only released once you confirm delivery."
-          : "You'll pay the service fee upfront, held until you confirm the errand is complete. HR coordinates directly with the partner — no need for you to message them."}
+          ? "You'll pay the total upfront. Once your chosen partner accepts, the item cost is released to them to make the purchase. The partner's fee is only released once you confirm delivery. The platform fee is non-refundable once a partner accepts."
+          : "You'll pay the total upfront, held until you confirm the errand is complete. Your chosen partner is notified immediately to accept the job."}
       </p>
 
-      <Button onClick={submit} disabled={submitting} className="w-full">
-        {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Continue to Payment
+      <Button onClick={submit} disabled={submitting || !partnerId} className="w-full">
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Continue to Payment{selected ? ` · ₦${total.toLocaleString()}` : ''}
       </Button>
     </div>
   )
@@ -219,9 +310,11 @@ function RequestCard({ request, role, onOpenThread, onRefresh }: { request: any;
         <Badge className={STATUS_COLOR[request.status]}>{STATUS_LABEL[request.status]}</Badge>
       </div>
 
-      <div className="flex items-center gap-3 mt-2 text-xs">
+      <div className="flex items-center gap-2 mt-2 text-xs flex-wrap">
         {request.itemCost != null && <span className="price-tag price-tag-outline">Item ₦{request.itemCost.toLocaleString()}</span>}
-        <span className="price-tag">Fee ₦{request.serviceFee.toLocaleString()}</span>
+        <span className="price-tag">Partner fee ₦{request.serviceFee.toLocaleString()}</span>
+        {request.platformFee != null && <span className="price-tag price-tag-outline">Platform ₦{request.platformFee.toLocaleString()}</span>}
+        {request.totalPaid != null && <span className="text-muted-foreground">Total ₦{request.totalPaid.toLocaleString()}</span>}
       </div>
 
       <div className="flex items-center gap-2 mt-3 flex-wrap">

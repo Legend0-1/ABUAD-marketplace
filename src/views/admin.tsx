@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import {
   Users, Store, Package, MessageSquare, AlertTriangle, Banknote, TrendingUp,
   CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star, Phone, Trash2,
+  Settings, Truck, Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminAgreementManager } from '@/components/admin-agreement-manager'
@@ -106,6 +107,7 @@ export function AdminPage() {
           <TabsTrigger value="audit">Audit Log</TabsTrigger>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="referrals">Referrals</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -518,7 +520,7 @@ export function AdminPage() {
 
         {/* Broadcast */}
         <TabsContent value="broadcast" className="mt-4 space-y-3">
-          <BroadcastPanel onSent={reload} />
+          <BroadcastPanel users={users} onSent={reload} />
         </TabsContent>
 
         <TabsContent value="agreement" className="mt-4">
@@ -540,6 +542,10 @@ export function AdminPage() {
         <TabsContent value="referrals" className="mt-4">
           <AdminReferralManager />
         </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <DeliverySettingsPanel />
+        </TabsContent>
       </Tabs>
     </div>
   )
@@ -560,16 +566,36 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string;
   )
 }
 
-function BroadcastPanel({ onSent }: { onSent: () => void }) {
+function BroadcastPanel({ users, onSent }: { users: any[]; onSent: () => void }) {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
-  const [userIds, setUserIds] = useState('')
+  const [selected, setSelected] = useState<any[]>([])
+  const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
+
+  const selectedIds = new Set(selected.map((u) => u.id))
+  const q = search.trim().toLowerCase()
+  const matches = q
+    ? users
+        .filter((u) => !selectedIds.has(u.id))
+        .filter((u) =>
+          [u.fullName, u.matricNumber, u.email]
+            .filter(Boolean)
+            .some((f: string) => f.toLowerCase().includes(q)),
+        )
+        .slice(0, 8)
+    : []
+
+  const addUser = (u: any) => {
+    setSelected((prev) => [...prev, u])
+    setSearch('')
+  }
+  const removeUser = (id: string) => setSelected((prev) => prev.filter((u) => u.id !== id))
 
   const send = async () => {
     if (!body) { toast.error('Message body required'); return }
     setBusy(true)
-    const ids = userIds.split(',').map((s) => s.trim()).filter(Boolean)
+    const ids = selected.map((u) => u.id)
     const { data, error } = await api('/api/messages/broadcast', {
       method: 'POST',
       body: { subject: subject || 'Message from UNI MART Admin', body, userIds: ids },
@@ -579,7 +605,8 @@ function BroadcastPanel({ onSent }: { onSent: () => void }) {
     toast.success(`Broadcast sent to ${data.count} user${data.count !== 1 ? 's' : ''}`)
     setSubject('')
     setBody('')
-    setUserIds('')
+    setSelected([])
+    setSearch('')
     onSent()
   }
 
@@ -587,28 +614,163 @@ function BroadcastPanel({ onSent }: { onSent: () => void }) {
     <div className="bg-card border rounded-lg p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Send className="w-5 h-5 text-primary" />
-        <h2 className="font-bold">Send Broadcast Message</h2>
+        <h2 className="font-bold">Send a Message</h2>
       </div>
-      <p className="text-xs text-muted-foreground">This message will appear in every recipient's inbox as an admin conversation. Leave the user IDs blank to send to ALL users.</p>
+      <p className="text-xs text-muted-foreground">
+        Search and pick specific people to message, or leave the recipient list empty to send to
+        <strong> all users</strong>. The message lands in each recipient's inbox as an admin conversation.
+      </p>
       <div>
         <Label>Subject</Label>
         <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Important update to seller agreement" />
       </div>
       <div>
         <Label>Message</Label>
-        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} placeholder="Type your message to all users…" />
+        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} placeholder="Type your message…" />
       </div>
+
+      {/* Recipient picker — replaces the old opaque "User IDs" box. Pick people
+          by name, matric number, or email instead of pasting an internal ID. */}
       <div>
-        <Label>Specific User IDs (optional, comma-separated)</Label>
-        <Input value={userIds} onChange={(e) => setUserIds(e.target.value)} placeholder="Leave blank to broadcast to everyone" />
+        <Label>Recipients (optional)</Label>
+        <div className="relative">
+          <div className="flex items-center gap-2 rounded-md border px-2.5">
+            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, matric number, or email…"
+              className="border-0 px-0 focus-visible:ring-0 shadow-none"
+            />
+          </div>
+          {matches.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full bg-popover border rounded-md shadow-md max-h-64 overflow-y-auto scrollbar-thin">
+              {matches.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => addUser(u)}
+                  className="w-full text-left flex items-center gap-2 px-2.5 py-2 hover:bg-accent/50 transition"
+                >
+                  <Avatar className="w-7 h-7">
+                    <AvatarImage src={u.profilePicture || undefined} />
+                    <AvatarFallback className="text-[10px]">{u.fullName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{u.fullName}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{u.matricNumber || '—'} · {u.email}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {q && matches.length === 0 && (
+            <div className="absolute z-20 mt-1 w-full bg-popover border rounded-md shadow-md px-3 py-2 text-xs text-muted-foreground">
+              No users match “{search}”.
+            </div>
+          )}
+        </div>
+
+        {selected.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {selected.map((u) => (
+              <span key={u.id} className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full pl-2 pr-1 py-0.5 text-xs">
+                {u.fullName}
+                <button type="button" onClick={() => removeUser(u.id)} className="hover:text-destructive rounded-full p-0.5">
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            ))}
+            <button type="button" onClick={() => setSelected([])} className="text-xs text-muted-foreground hover:text-foreground underline ml-1">
+              Clear
+            </button>
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground mt-1.5">No one selected — this will go to every user.</p>
+        )}
       </div>
+
       <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-500/30 rounded p-2 text-xs text-blue-700 dark:text-blue-400 flex gap-2">
         <Mail className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        <span>Messages are also delivered as simulated emails to the users' registered emails.</span>
+        <span>When email is configured, this is also delivered to recipients' registered email addresses.</span>
       </div>
       <Button onClick={send} disabled={busy}>
-        {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />} Send Broadcast
+        {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+        {selected.length > 0 ? `Send to ${selected.length} ${selected.length === 1 ? 'person' : 'people'}` : 'Send to Everyone'}
       </Button>
+    </div>
+  )
+}
+
+function DeliverySettingsPanel() {
+  const [fee, setFee] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api<{ deliveryFlatFee: number }>('/api/admin/settings').then(({ data }) => {
+      if (typeof data?.deliveryFlatFee === 'number') setFee(String(data.deliveryFlatFee))
+      setLoading(false)
+    })
+  }, [])
+
+  const save = async () => {
+    const n = Number(fee)
+    if (!Number.isFinite(n) || n < 0 || n > 1_000_000) {
+      toast.error('Enter a valid fee between ₦0 and ₦1,000,000')
+      return
+    }
+    setSaving(true)
+    const { data, error } = await api<{ deliveryFlatFee: number }>('/api/admin/settings', {
+      method: 'PUT',
+      body: { deliveryFlatFee: n },
+    })
+    setSaving(false)
+    if (error) { toast.error(error); return }
+    if (typeof data?.deliveryFlatFee === 'number') setFee(String(data.deliveryFlatFee))
+    toast.success('Delivery platform fee updated')
+  }
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <div className="flex items-center gap-2">
+        <Settings className="w-5 h-5 text-primary" />
+        <h2 className="font-bold">Platform Settings</h2>
+      </div>
+
+      <div className="bg-card border rounded-lg p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Truck className="w-4 h-4 text-primary" />
+          <h3 className="font-semibold text-sm">Delivery platform fee</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          A flat fee added on top of each delivery partner's own fee on every delivery request.
+          Customers see it as a separate "Platform delivery fee" line before they pay. Changing it
+          only affects new requests — requests already created keep the fee they were quoted.
+        </p>
+        {loading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Flat fee (₦)</Label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min={0}
+                max={1000000}
+                value={fee}
+                onChange={(e) => setFee(e.target.value)}
+                placeholder="1000"
+                className="max-w-40"
+              />
+              <Button onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Save
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Default is ₦1,000. Set to ₦0 to waive the platform fee.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

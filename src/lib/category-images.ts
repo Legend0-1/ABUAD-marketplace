@@ -11,14 +11,21 @@
 const UNSPLASH = (id: string, w = 600, h = 450) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&h=${h}&q=70`
 
+// A mapped value is either an Unsplash photo id (built into a CDN URL) or, when
+// it starts with "/", a local asset path (e.g. a bundled SVG) that is returned
+// verbatim. Local assets are used where we want a guaranteed on-brand subject
+// that can never hotlink-fail.
+const resolveImage = (val: string, w = 600, h = 450) =>
+  val.startsWith('/') ? val : UNSPLASH(val, w, h)
+
 // Keyword -> photo. First match wins, so order from specific to generic.
 const RULES: { test: RegExp; id: string }[] = [
   { test: /cloth|fashion|apparel|wear|thrift|outfit/i, id: '1445205170230-053b83016050' },
   { test: /cosmetic|beauty|makeup|skincare|hair|wig|braid/i, id: '1596462502278-27bfdc403348' },
-  { test: /deliver|errand|dispatch|logistics|runner|pickup|package|truck/i, id: '1566576912321-d58ddd7a6088' },
+  { test: /deliver|errand|dispatch|logistics|runner|pickup|package|truck/i, id: '/img/delivery.svg' },
   { test: /laundry|wash|dry-?clean|ironing/i, id: '1545173168-9f1947eebb7f' },
   { test: /note|assign|project|writing|research|essay|document|file/i, id: '1517842645767-c639042777db' },
-  { test: /print|photocopy|binding|stationery/i, id: '1568667256549-094345857637' },
+  { test: /print|photocopy|binding|stationery/i, id: '/img/print.svg' },
   { test: /phone|gadget|smartphone|mobile|device/i, id: '1511707171634-5f897ff02aa9' },
   { test: /electronic|appliance|plug|charger|blender|extension|fan|bulb/i, id: '1498049794561-7780e7231661' },
   { test: /food|drink|snack|meal|pastry|restaurant|kitchen/i, id: '1504674900247-0877df9cc836' },
@@ -35,10 +42,10 @@ const RULES: { test: RegExp; id: string }[] = [
 const ICON_MAP: Record<string, string> = {
   Shirt: '1445205170230-053b83016050',
   Sparkles: '1596462502278-27bfdc403348',
-  Truck: '1566576912321-d58ddd7a6088',
+  Truck: '/img/delivery.svg',
   WashingMachine: '1545173168-9f1947eebb7f',
   FileText: '1517842645767-c639042777db',
-  Printer: '1568667256549-094345857637',
+  Printer: '/img/print.svg',
   Smartphone: '1511707171634-5f897ff02aa9',
   Plug: '1498049794561-7780e7231661',
   BedDouble: '1522708323590-d24dbb6b0267',
@@ -54,8 +61,8 @@ type CategoryLike = { slug?: string; name?: string; icon?: string | null }
 export function categoryImage(cat: CategoryLike, w = 600, h = 450): string {
   const haystack = `${cat.slug || ''} ${cat.name || ''}`
   for (const rule of RULES) {
-    if (rule.test.test(haystack)) return UNSPLASH(rule.id, w, h)
+    if (rule.test.test(haystack)) return resolveImage(rule.id, w, h)
   }
-  if (cat.icon && ICON_MAP[cat.icon]) return UNSPLASH(ICON_MAP[cat.icon], w, h)
-  return UNSPLASH(DEFAULT_ID, w, h)
+  if (cat.icon && ICON_MAP[cat.icon]) return resolveImage(ICON_MAP[cat.icon], w, h)
+  return resolveImage(DEFAULT_ID, w, h)
 }

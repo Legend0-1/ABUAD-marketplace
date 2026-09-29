@@ -36,6 +36,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title, description, price and kind are required' }, { status: 400 })
     }
 
+    // Validate money/stock so negative or non-numeric values can't be stored
+    // and corrupt downstream order math.
+    const priceNum = Number(price)
+    if (!Number.isFinite(priceNum) || priceNum <= 0 || priceNum > 100_000_000) {
+      return NextResponse.json({ error: 'Enter a valid price greater than ₦0.' }, { status: 400 })
+    }
+    const stockNum = stock === undefined || stock === null || stock === '' ? 1 : Number(stock)
+    if (!Number.isInteger(stockNum) || stockNum < 0 || stockNum > 1_000_000) {
+      return NextResponse.json({ error: 'Stock must be a whole number of 0 or more.' }, { status: 400 })
+    }
+
     // Resolve category
     let finalCategoryId = categoryId
     let isFood = false
@@ -83,8 +94,8 @@ export async function POST(req: NextRequest) {
     // Create product
     const product = await db.product.create({
       data: {
-        title, description, price: Number(price),
-        kind, condition: condition || null, stock: Number(stock) || 1,
+        title, description, price: priceNum,
+        kind, condition: condition || null, stock: stockNum,
         categoryId: finalCategoryId,
         sellerId: user.id,
         storefrontId: storefront.id,

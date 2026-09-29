@@ -53,9 +53,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true })
       }
       if (deliveryRequest.status === 'pending_payment') {
+        // Customer already chose a partner at creation, so go straight to that
+        // partner to accept/decline. Legacy requests with no partner fall back
+        // to the HR assignment queue.
+        const nextStatus = deliveryRequest.partnerId ? 'awaiting_partner' : 'pending_hr'
         await db.deliveryRequest.update({
           where: { id: deliveryRequest.id },
-          data: { status: 'pending_hr', paidAt: new Date() },
+          data: { status: nextStatus, paidAt: new Date() },
         })
       }
       return NextResponse.json({ received: true })

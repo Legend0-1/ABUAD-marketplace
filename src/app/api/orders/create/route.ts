@@ -13,7 +13,15 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit(req, 'createOrder')
     if (!rl.allowed) return NextResponse.json({ error: 'Too many orders in a short time. Please wait a moment.' }, { status: 429 })
 
-    const { productId, quantity = 1, deliveryAddress, deliveryNotes } = await req.json()
+    const { productId, quantity: rawQuantity = 1, deliveryAddress, deliveryNotes } = await req.json()
+
+    // Validate quantity server-side. Without this, a fractional value like 0.01
+    // slips past the stock check and produces a near-zero totalAmount, letting a
+    // buyer pay almost nothing for another seller's item.
+    const quantity = Number(rawQuantity)
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) {
+      return NextResponse.json({ error: 'Quantity must be a whole number between 1 and 999.' }, { status: 400 })
+    }
 
     const product = await db.product.findUnique({
       where: { id: productId },

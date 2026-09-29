@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Shield, ShieldCheck, Upload, X, GraduationCap, AlertCircle, Loader2, UserCheck } from 'lucide-react'
 import { toast } from 'sonner'
+import { DepartmentSelect } from '@/components/department-select'
 
 
 const LEVELS = ['100', '200', '300', '400', '500', '600']
@@ -193,7 +194,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               </div>
               <div>
                 <Label htmlFor="dept">Department <span className="text-destructive">*</span></Label>
-                <Input id="dept" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="e.g. Computer Science" />
+                <DepartmentSelect id="dept" value={form.department} onChange={(v) => setForm({ ...form, department: v })} />
               </div>
               <div>
                 <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>

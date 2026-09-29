@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { db } from './db'
 import { hashPassword } from './auth'
 import { backfillReferralCodes } from './referral'
@@ -9,10 +10,18 @@ export async function bootstrapMarketplace() {
   const adminEmail = 'admin@unimart.ng'
   let admin = await db.user.findUnique({ where: { email: adminEmail } })
   if (!admin) {
+    // Never ship a hardcoded admin password. Use ADMIN_INITIAL_PASSWORD when
+    // provided; otherwise generate a strong random one and print it to the
+    // server log exactly once so the operator can retrieve it and sign in,
+    // then change it. This runs only when the admin doesn't already exist.
+    const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || crypto.randomBytes(12).toString('base64url')
+    if (!process.env.ADMIN_INITIAL_PASSWORD) {
+      console.warn(`[bootstrap] Created initial admin "${adminEmail}" with a generated password: ${adminPassword}\n[bootstrap] Sign in and change it immediately. Set ADMIN_INITIAL_PASSWORD to control this value.`)
+    }
     admin = await db.user.create({
       data: {
         email: adminEmail,
-        passwordHash: hashPassword('admin1234'),
+        passwordHash: hashPassword(adminPassword),
         fullName: 'UNI MART Admin',
         matricNumber: 'ADMIN-0001',
         level: 'Staff',
@@ -172,7 +181,7 @@ async function seedDemoData() {
       user = await db.user.create({
         data: {
           email: s.email,
-          passwordHash: hashPassword('password123'),
+          passwordHash: hashPassword(crypto.randomBytes(24).toString('base64url')),
           fullName: s.fullName,
           matricNumber: s.matricNumber,
           level: s.level,

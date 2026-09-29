@@ -37,6 +37,7 @@ import { DeliveriesPage } from '@/views/deliveries'
 import { HRQueuePage } from '@/views/hr-queue'
 import { ResetPasswordPage } from '@/views/reset-password'
 import { PrivacyPolicyPage } from '@/views/privacy-policy'
+import { ContactAdminPage } from '@/views/contact-admin'
 
 import { pathToView } from '@/lib/routing'
 
@@ -156,6 +157,7 @@ export default function Home() {
           {view.name === 'hr-queue' && <HRQueuePage />}
           {view.name === 'reset-password' && <ResetPasswordPage token={view.token} />}
           {view.name === 'privacy-policy' && <PrivacyPolicyPage />}
+          {view.name === 'contact-admin' && <ContactAdminPage />}
         </main>
         <Footer />
       </div>

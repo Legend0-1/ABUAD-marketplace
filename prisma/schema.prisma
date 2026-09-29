@@ -313,6 +313,16 @@ model Feedback {
   createdAt   DateTime @default(now())
 }
 
+// Admin-adjustable platform settings as a simple key/value store. Values are
+// stored as strings and parsed by callers (e.g. DELIVERY_FLAT_FEE -> number).
+// Seeded with sensible defaults on first read (see lib/settings.ts).
+model Setting {
+  key         String   @id
+  value       String
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}
+
 // --- Delivery Partner + HR dispatch system ---
 //
 // Two job types with different payout timing:
@@ -335,6 +345,8 @@ model DeliveryPartnerProfile {
   accountNumber   String
   recipientCode   String?  // Paystack transfer recipient, created on first payout
   baseFeeNote     String?  // partner's stated pricing/availability notes
+  deliveryFee     Float?   // partner's own price per delivery, shown to customers in the pick-a-partner list
+  isAvailable     Boolean  @default(true) // partner can toggle off to stop receiving new requests / appearing in the list
   trustScore      Int      @default(0)
   // Separate, explicitly-granted gate for buy_and_deliver jobs -- general
   // approval alone only qualifies a partner for errand_only work. HR must
@@ -358,7 +370,8 @@ model DeliveryRequest {
   description     String
   dropoffLocation String
   itemCost        Float?   // null for errand_only
-  serviceFee      Float
+  serviceFee      Float    // the chosen partner's delivery fee (was: amount the customer offered)
+  platformFee     Float?   // flat platform delivery fee snapshot at creation (admin-adjustable Setting; default ₦1000)
   totalPaid       Float
   status          String   @default("pending_payment")
   // pending_payment -> pending_hr (paid, awaiting HR assignment) -> awaiting_partner (assigned, awaiting accept/decline)

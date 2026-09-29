@@ -18,6 +18,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
   }
 
+  // The product must exist, and you can't review your own listing.
+  const product = await db.product.findUnique({ where: { id: productId }, select: { sellerId: true } })
+  if (!product) {
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+  }
+  if (product.sellerId === user.id) {
+    return NextResponse.json({ error: 'You cannot review your own listing' }, { status: 400 })
+  }
+
+  // Require a real purchase: only a buyer with an order for this product that
+  // actually reached payment may review it. Blocks drive-by rating manipulation
+  // (fake 5-stars on your own items, 1-star on competitors) with no transaction.
+  const purchased = await db.order.findFirst({
+    where: {
+      productId,
+      buyerId: user.id,
+      status: { in: ['paid', 'in_transit', 'delivered', 'acknowledged', 'disputed', 'completed'] },
+    },
+    select: { id: true },
+  })
+  if (!purchased) {
+    return NextResponse.json({ error: 'You can only review items you have purchased.' }, { status: 403 })
+  }
+
   // Prevent duplicate reviews by same user on same product
   const existing = await db.review.findUnique({
     where: { productId_userId: { productId, userId: user.id } },

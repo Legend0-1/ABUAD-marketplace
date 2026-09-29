@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
+import { tryVerifyAccount } from '@/lib/paystack'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const {
       name, description, type,
-      bankName, accountName, accountNumber, phoneNumber, contactEmail,
+      bankName, bankCode, accountName, accountNumber, phoneNumber, contactEmail,
       agreementId, agreementAccepted,
     } = body
 
@@ -45,12 +46,19 @@ export async function POST(req: NextRequest) {
     }
     const status = 'active'
 
+    // Best-effort: re-verify the account with the bank server-side so the stored
+    // account name is the authoritative one (not just whatever the client sent).
+    // Falls back to the submitted values if Paystack isn't configured / can't verify.
+    const verified = await tryVerifyAccount({ bankName, bankCode, accountNumber })
+    const finalAccountName = verified?.accountName || accountName
+    const finalBankCode = verified?.bankCode || bankCode || null
+
     const [storefront] = await db.$transaction([
       db.storefront.create({
         data: {
           ownerId: user.id,
           name, description, type,
-          bankName, accountName, accountNumber, phoneNumber, contactEmail,
+          bankName, bankCode: finalBankCode, accountName: finalAccountName, accountNumber, phoneNumber, contactEmail,
           status,
         },
       }),

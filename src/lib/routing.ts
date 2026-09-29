@@ -30,6 +30,7 @@ export function viewToPath(view: View): string {
     case 'hr-queue': return '/hr'
     case 'reset-password': return `/reset-password?token=${encodeURIComponent(view.token)}`
     case 'privacy-policy': return '/privacy'
+    case 'contact-admin': return '/contact'
     default: return '/'
   }
 }
@@ -66,6 +67,7 @@ export function pathToView(pathname: string, search: URLSearchParams): View | nu
     case 'deliveries': return { name: 'deliveries' }
     case 'hr': return { name: 'hr-queue' }
     case 'privacy': return { name: 'privacy-policy' }
+    case 'contact': return { name: 'contact-admin' }
     case 'reset-password': {
       const token = search.get('token')
       return token ? { name: 'reset-password', token } : null

@@ -3,9 +3,17 @@ import { db } from '@/lib/db'
 import { createSessionToken, parsePendingTwoFactorToken } from '@/lib/auth'
 import { verifyTotp } from '@/lib/totp'
 import { logAudit } from '@/lib/audit'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate-limit code submission so the 6-digit TOTP can't be brute-forced
+    // within the 5-minute pending-token window.
+    const rl = await checkRateLimit(req, 'login')
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many attempts. Please wait a moment and try again.' }, { status: 429 })
+    }
+
     const { pendingToken, code } = await req.json()
     const pending = parsePendingTwoFactorToken(pendingToken)
     if (!pending) {

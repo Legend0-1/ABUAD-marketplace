@@ -24,6 +24,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data URL' }, { status: 400 })
   }
 
+  // Cross-check the declared type against the data URL's actual mediatype so a
+  // payload like `data:text/html;base64,...` can't be stored under type "image".
+  const semi = dataUrl.indexOf(';')
+  const comma = dataUrl.indexOf(',')
+  const end = semi === -1 ? comma : (comma === -1 ? semi : Math.min(semi, comma))
+  const mediaType = end > 5 ? dataUrl.slice(5, end).toLowerCase() : ''
+  if (!mediaType.startsWith(`${type}/`)) {
+    return NextResponse.json({ error: 'File contents do not match the declared media type' }, { status: 400 })
+  }
+
   // Size cap: 8MB for images, 25MB for video/audio (data URL overhead included)
   const sizeBytes = Math.ceil((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75)
   const cap = type === 'image' ? 8 * 1024 * 1024 : 25 * 1024 * 1024

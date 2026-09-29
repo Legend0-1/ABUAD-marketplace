@@ -8,16 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { MessageSquare, Search, ShieldCheck, Send, Inbox as InboxIcon, ChevronRight, X } from 'lucide-react'
+import { MessageSquare, Search, ShieldCheck, LifeBuoy, Inbox as InboxIcon, ChevronRight, X } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
-import { toast } from 'sonner'
 
 export function InboxPage() {
   const { user, setView, setAuthModalOpen } = useStore()
   const [conversations, setConversations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [newChatUserId, setNewChatUserId] = useState('')
   const socketRef = useRef<Socket | null>(null)
 
   const reload = async () => {
@@ -68,17 +66,6 @@ export function InboxPage() {
     const name = c.otherParty?.fullName || 'Admin'
     return name.toLowerCase().includes(search.toLowerCase()) || (c.subject || '').toLowerCase().includes(search.toLowerCase())
   })
-
-  const startChat = async () => {
-    if (!newChatUserId.trim()) return
-    const { data, error } = await api('/api/messages/conversations', {
-      method: 'POST',
-      body: { otherUserId: newChatUserId.trim(), body: 'Hi! I wanted to reach out.' },
-    })
-    if (error) { toast.error(error); return }
-    setNewChatUserId('')
-    setView({ name: 'inboxThread', conversationId: data.conversationId })
-  }
 
   if (!user) {
     return <div className="max-w-3xl mx-auto px-4 py-16 text-center text-muted-foreground">Please sign in.</div>
@@ -152,12 +139,14 @@ export function InboxPage() {
         </div>
       )}
 
-      <div className="mt-4 bg-card border rounded-lg p-3">
-        <p className="text-xs text-muted-foreground mb-2">Start a new conversation by entering a user ID:</p>
-        <div className="flex gap-2">
-          <Input placeholder="User ID (cuid)" value={newChatUserId} onChange={(e) => setNewChatUserId(e.target.value)} />
-          <Button onClick={startChat}><Send className="w-4 h-4 mr-1" /> Start</Button>
+      <div className="mt-4 bg-card border rounded-lg p-3 flex items-center justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Need help with something?</p>
+          <p className="text-xs text-muted-foreground">Reach the UNI MART admin team about any order, payment, or account issue.</p>
         </div>
+        <Button onClick={() => setView({ name: 'contact-admin' })} className="gap-1 shrink-0">
+          <LifeBuoy className="w-4 h-4" /> Contact Admin
+        </Button>
       </div>
     </div>
   )

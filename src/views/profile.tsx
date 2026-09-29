@@ -17,6 +17,7 @@ import { Store, Package, MessageSquare, ChevronRight, ShieldCheck, Edit, Loader2
 import { toast } from 'sonner'
 import { ReferralSummaryCard } from '@/components/referral-summary-card'
 import { EmailVerificationBanner } from '@/components/email-verification-banner'
+import { DepartmentSelect } from '@/components/department-select'
 
 export function ProfilePage() {
   const { user, setUser, setView } = useStore()
@@ -202,7 +203,7 @@ export function ProfilePage() {
                 <AvatarImage src={form.profilePicture || undefined} />
                 <AvatarFallback className="text-xl">{(form.fullName || user.fullName).charAt(0)}</AvatarFallback>
               </Avatar>
-              <label className="text-sm cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 transition">
+              <label className="text-sm cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent transition">
                 <Camera className="w-4 h-4" /> Change photo
                 <input type="file" accept="image/*" className="hidden" onChange={onPickPhoto} />
               </label>
@@ -218,7 +219,7 @@ export function ProfilePage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="pf-dept">Department</Label>
-                <Input id="pf-dept" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} />
+                <DepartmentSelect id="pf-dept" value={form.department} onChange={(v) => setForm((f) => ({ ...f, department: v }))} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="pf-level">Level</Label>

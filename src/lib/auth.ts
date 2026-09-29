@@ -6,8 +6,22 @@ import bcrypt from 'bcryptjs'
 // since this change shipped -- those get silently upgraded to bcrypt on
 // their next successful login (see needsRehash below), rather than forcing
 // every existing user to reset their password.
+// Resolve the secret used for legacy password hashing and all token signing.
+// In production we refuse to fall back to the built-in constant: a missing
+// AUTH_SALT there would silently make every session/reset/verify token
+// forgeable, so we fail closed instead. In development the constant fallback
+// is kept so local setups work without extra env configuration.
+function requireSalt(): string {
+  const salt = process.env.AUTH_SALT
+  if (salt) return salt
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('AUTH_SALT must be set in production. Refusing to use the insecure built-in fallback.')
+  }
+  return 'unimart-salt-2024'
+}
+
 function legacyHashPassword(password: string): string {
-  const salt = process.env.AUTH_SALT || 'unimart-salt-2024'
+  const salt = requireSalt()
   return crypto
     .createHash('sha256')
     .update(salt + ':' + password)
@@ -40,7 +54,7 @@ export function needsRehash(hash: string): boolean {
 // hand-craft a base64-encoded {"userId": "...", "exp": ...} payload and
 // impersonate any account without ever knowing their password.
 function getSessionSecret(): string {
-  return process.env.AUTH_SALT || 'unimart-salt-2024'
+  return requireSalt()
 }
 
 function signPayload(payloadB64: string): string {

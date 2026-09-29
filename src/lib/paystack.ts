@@ -23,6 +23,12 @@ function getSecretKey(): string {
   return key
 }
 
+/** True when a Paystack secret key is available, so callers can degrade
+ *  gracefully (e.g. skip live bank/account verification) instead of throwing. */
+export function isPaystackConfigured(): boolean {
+  return !!process.env.PAYSTACK_SECRET_KEY
+}
+
 async function paystackFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${PAYSTACK_BASE_URL}${path}`, {
     ...options,
@@ -87,6 +93,64 @@ export async function resolveBankCode(bankName: string): Promise<string | null> 
     (b) => b.name.toLowerCase() === bankName.toLowerCase() || b.name.toLowerCase().includes(bankName.toLowerCase())
   )
   return match?.code ?? null
+}
+
+/** Live list of Nigerian banks Paystack can pay out to, for the bank dropdown.
+ *  Sorted alphabetically; de-duplicated by (name, code). */
+export async function listBanks(): Promise<{ name: string; code: string }[]> {
+  const data = await paystackFetch('/bank?country=nigeria&currency=NGN')
+  const raw = (data.data as { name: string; code: string }[]) || []
+  const seen = new Set<string>()
+  const banks: { name: string; code: string }[] = []
+  for (const b of raw) {
+    if (!b?.name || !b?.code) continue
+    const key = `${b.name}|${b.code}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    banks.push({ name: b.name, code: b.code })
+  }
+  banks.sort((a, b) => a.name.localeCompare(b.name))
+  return banks
+}
+
+/** Ask Paystack for the account holder's name for a given account number + bank
+ *  code. This is what lets a user confirm they own the account (like the name
+ *  preview during a mobile bank transfer). Throws if the account can't be
+ *  resolved (wrong number/bank, or Paystack error). */
+export async function resolveAccountNumber(params: {
+  accountNumber: string
+  bankCode: string
+}): Promise<{ accountNumber: string; accountName: string }> {
+  const data = await paystackFetch(
+    `/bank/resolve?account_number=${encodeURIComponent(params.accountNumber)}&bank_code=${encodeURIComponent(params.bankCode)}`
+  )
+  return {
+    accountNumber: String(data.data?.account_number ?? params.accountNumber),
+    accountName: String(data.data?.account_name ?? ''),
+  }
+}
+
+/** Best-effort server-side verification used when saving bank details. Returns
+ *  the bank-verified account name + resolved bank code, or null if it can't be
+ *  verified (Paystack not configured, unknown bank, bad number, network error).
+ *  Never throws — callers fall back to the client-supplied name so a transient
+ *  Paystack hiccup never blocks storefront/partner setup. */
+export async function tryVerifyAccount(params: {
+  bankName: string
+  bankCode?: string | null
+  accountNumber: string
+}): Promise<{ accountName: string; bankCode: string } | null> {
+  if (!isPaystackConfigured()) return null
+  if (!/^\d{10}$/.test(params.accountNumber)) return null
+  try {
+    const code = params.bankCode || (await resolveBankCode(params.bankName))
+    if (!code) return null
+    const res = await resolveAccountNumber({ accountNumber: params.accountNumber, bankCode: code })
+    if (!res.accountName) return null
+    return { accountName: res.accountName, bankCode: code }
+  } catch {
+    return null
+  }
 }
 
 export async function createTransferRecipient(params: {

@@ -97,7 +97,7 @@ export function HomePage() {
         <h2 className="text-lg sm:text-xl font-bold">{title}</h2>
       </div>
       {onSeeAll && (
-        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white" onClick={onSeeAll}>
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={onSeeAll}>
           See all <ChevronRight className="w-4 h-4" />
         </Button>
       )}
@@ -113,14 +113,17 @@ export function HomePage() {
             <ImageWithFallback src={s.photo} alt={s.title} className="w-full h-full" />
           </div>
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent" />
+        {/* Fixed dark scrims (not theme background) so the hero stays a
+            cinematic dark banner and its white text/badges keep contrast in
+            both light and dark mode. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d1420] via-[#0d1420]/85 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0d1420]/90 via-transparent to-transparent" />
 
         <div className="relative h-full flex flex-col justify-center max-w-xl px-5 sm:px-10">
           <Badge className="glass border-white/15 text-white w-fit mb-3">
             <ShieldCheck className="w-3 h-3 mr-1 text-verified" /> Verified Students Only
           </Badge>
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3">{hero.title}</h1>
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3 text-white">{hero.title}</h1>
           <p className="text-sm sm:text-base text-white/80 mb-6 max-w-md">{hero.subtitle}</p>
           <div className="flex flex-wrap gap-3">
             <Button size="lg" className="cta-gradient font-bold border-0 rounded-full" onClick={() => handleCta(hero.cta)}>

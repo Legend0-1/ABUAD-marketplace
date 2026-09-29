@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
+import { BankAccountFields } from '@/components/bank-account-fields'
 import {
   ChevronRight, Store, ShieldCheck, Banknote, Phone, Mail, Loader2, ScrollText,
   CheckCircle2, AlertCircle,
@@ -26,7 +27,7 @@ export function SetupStorefrontPage() {
   const [accepted, setAccepted] = useState(false)
   const [form, setForm] = useState({
     name: '', description: '', type: 'both',
-    bankName: '', accountName: '', accountNumber: '', phoneNumber: '', contactEmail: '',
+    bankName: '', bankCode: '', accountName: '', accountNumber: '', phoneNumber: '', contactEmail: '',
   })
 
   useEffect(() => {
@@ -137,19 +138,11 @@ export function SetupStorefrontPage() {
         <div>
           <h2 className="font-bold text-sm mb-2 flex items-center gap-1.5"><Banknote className="w-4 h-4 text-primary" /> Payout & Contact Details</h2>
           <p className="text-xs text-muted-foreground mb-3">Your 80% share of each sale will be sent to this bank account after the buyer acknowledges receipt.</p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <Label>Bank Name <span className="text-destructive">*</span></Label>
-              <Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} placeholder="e.g. Access Bank" />
-            </div>
-            <div>
-              <Label>Account Name <span className="text-destructive">*</span></Label>
-              <Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} placeholder="e.g. Okafor Chioma" />
-            </div>
-            <div>
-              <Label>Account Number <span className="text-destructive">*</span></Label>
-              <Input value={form.accountNumber} onChange={(e) => setForm({ ...form, accountNumber: e.target.value.replace(/[^0-9]/g, '') })} placeholder="10-digit account number" maxLength={10} />
-            </div>
+          <BankAccountFields
+            value={{ bankName: form.bankName, bankCode: form.bankCode, accountNumber: form.accountNumber, accountName: form.accountName }}
+            onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+          />
+          <div className="grid sm:grid-cols-2 gap-3 mt-3">
             <div>
               <Label>Phone Number <span className="text-destructive">*</span></Label>
               <Input value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} placeholder="e.g. 08012345678" />

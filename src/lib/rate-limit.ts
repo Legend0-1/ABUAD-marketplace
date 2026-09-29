@@ -27,6 +27,10 @@ const limiters = redis ? {
   createOrder: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20, '10 m'), prefix: 'rl:create-order' }),
   review: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(15, '10 m'), prefix: 'rl:review' }),
   report: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, '1 h'), prefix: 'rl:report' }),
+  // Bank list is cheap + cached; account resolution hits Paystack per attempt,
+  // so keep it modest to avoid us being used as a name-enumeration oracle.
+  banks: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(40, '10 m'), prefix: 'rl:banks' }),
+  resolveAccount: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(25, '10 m'), prefix: 'rl:resolve-account' }),
 } : null
 
 export type RateLimitKey = keyof NonNullable<typeof limiters>

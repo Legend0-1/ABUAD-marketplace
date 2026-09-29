@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
 import {
   Home, Store, Package, MessageSquare, Truck, ShieldCheck, LayoutDashboard,
-  Sparkles, ChevronDown, X, Plus,
+  Sparkles, ChevronDown, X, Plus, LifeBuoy,
   Shirt, WashingMachine, Printer, Footprints, Smartphone, BookOpen,
   Plug, BedDouble, Tag, FileText,
   type LucideIcon,
@@ -51,6 +51,7 @@ export function Sidebar() {
     { label: 'Orders', icon: Package, active: view.name === 'orders', onClick: () => go({ name: 'orders' }, true), auth: true },
     { label: 'Inbox', icon: MessageSquare, active: view.name === 'inbox' || view.name === 'inboxThread', onClick: () => go({ name: 'inbox' }, true), auth: true },
     { label: 'Deliveries', icon: Truck, active: view.name === 'deliveries', onClick: () => go({ name: 'deliveries' }, true), auth: true },
+    { label: 'Contact Admin', icon: LifeBuoy, active: view.name === 'contact-admin', onClick: () => go({ name: 'contact-admin' }, true), auth: true },
   ]
 
   const NavRow = ({

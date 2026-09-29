@@ -17,6 +17,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const newStatus = statusMap[action]
   if (!newStatus) return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
+  // Separation of duties: a reviewer can't approve/reject/suspend their own
+  // delivery-partner profile.
+  const existing = await db.deliveryPartnerProfile.findUnique({ where: { id }, select: { userId: true } })
+  if (!existing) return NextResponse.json({ error: 'Partner not found' }, { status: 404 })
+  if (existing.userId === actor.id) {
+    return NextResponse.json({ error: 'You cannot review your own delivery-partner profile — ask another admin or HR.' }, { status: 403 })
+  }
+
   const profile = await db.deliveryPartnerProfile.update({
     where: { id },
     data: { status: newStatus, reviewedById: actor.id, reviewedAt: new Date() },

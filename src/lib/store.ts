@@ -44,6 +44,7 @@ export type View =
   | { name: 'hr-queue' }
   | { name: 'reset-password'; token: string }
   | { name: 'privacy-policy' }
+  | { name: 'contact-admin' }
 
 type CartItem = {
   productId: string

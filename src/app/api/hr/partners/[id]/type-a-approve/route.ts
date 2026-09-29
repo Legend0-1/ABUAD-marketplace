@@ -15,6 +15,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { grant } = await req.json() // boolean
   const profile = await db.deliveryPartnerProfile.findUnique({ where: { id } })
   if (!profile) return NextResponse.json({ error: 'Partner not found' }, { status: 404 })
+  // Separation of duties: a reviewer can't grant Type-A (buy & deliver) money
+  // authority to their own profile.
+  if (profile.userId === actor.id) {
+    return NextResponse.json({ error: 'You cannot grant Type-A eligibility to your own profile — ask another admin or HR.' }, { status: 403 })
+  }
   if (grant && profile.status !== 'approved') {
     return NextResponse.json({ error: 'Partner must be generally approved before granting Type-A (buy & deliver) eligibility' }, { status: 400 })
   }

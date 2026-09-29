@@ -14,9 +14,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const verified = await verifyTransaction(request.paystackReference)
     if (verified.status === 'success' && request.status === 'pending_payment') {
+      // A partner is chosen by the customer at creation time, so payment sends
+      // the request straight to that partner to accept/decline. Legacy requests
+      // with no partner fall back to the HR assignment queue.
+      const nextStatus = request.partnerId ? 'awaiting_partner' : 'pending_hr'
       await db.deliveryRequest.update({
         where: { id: request.id },
-        data: { status: 'pending_hr', paidAt: new Date() },
+        data: { status: nextStatus, paidAt: new Date() },
       })
     }
   } catch (e) {
