@@ -15,6 +15,11 @@ export type SessionUser = {
   isAdmin: boolean
   isHR?: boolean
   currency?: string | null
+  // Campus scoping: the institution the student registered under. Null/empty
+  // means their campus hasn't been set yet, so the browse gate prompts for it.
+  country?: string | null
+  institution?: string | null
+  institutionType?: string | null
 }
 
 export type View =

@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
 import { getStorefrontDeletionBlockers, hardDeleteStorefront } from '@/lib/account-deletion'
+import { campusKeyFor, campusLabel } from '@/lib/campus'
 
 // List all storefronts (with status filter)
 export async function GET(req: Request) {
@@ -36,7 +37,51 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const { storefrontId, action } = await req.json()
+  const body = await req.json()
+  const { storefrontId, action } = body
+
+  // --- Campus management -----------------------------------------------------
+  // Admins can give a storefront extra campuses beyond its primary one, so a
+  // seller near a border (or running a chain across two schools) can be visible
+  // to both. `campuses` is the full list the admin wants the storefront scoped
+  // to; the primary (the owner's own institution) is always retained.
+  if (action === 'set_campuses') {
+    if (!storefrontId) return NextResponse.json({ error: 'storefrontId is required' }, { status: 400 })
+    const raw: unknown = body.campuses
+    const list = Array.isArray(raw)
+      ? raw.map((c) => campusLabel(typeof c === 'string' ? c : ''))
+      : String(raw ?? '').split(',').map((c) => campusLabel(c))
+    const cleaned = list.filter((c): c is string => !!c)
+
+    const target = await db.storefront.findUnique({
+      where: { id: storefrontId },
+      select: { name: true, campus: true, campusKeys: true },
+    })
+    if (!target) return NextResponse.json({ error: 'Storefront not found' }, { status: 404 })
+
+    // Always keep the primary campus (owner's institution) in the set.
+    const labels = Array.from(new Set([target.campus, ...cleaned].filter((c): c is string => !!c)))
+    if (labels.length === 0) {
+      return NextResponse.json({ error: 'At least one campus is required' }, { status: 400 })
+    }
+    const keys = Array.from(new Set(labels.map((l) => campusKeyFor(l)).filter(Boolean)))
+
+    const storefront = await db.storefront.update({
+      where: { id: storefrontId },
+      data: { campus: labels[0], campusKeys: keys },
+    })
+
+    await logAudit({
+      actor: admin,
+      action: 'storefront.set_campuses',
+      targetType: 'Storefront',
+      targetId: storefrontId,
+      detail: `${storefront.name} → campuses [${labels.join(', ')}]`,
+    })
+
+    return NextResponse.json({ storefront, message: 'Campuses updated' })
+  }
+
   // action: "approve" | "reject" | "suspend" | "reactivate"
   const statusMap: Record<string, string> = {
     approve: 'active',

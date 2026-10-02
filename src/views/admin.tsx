@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import {
   Users, Store, Package, MessageSquare, AlertTriangle, Banknote, TrendingUp,
   CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star, Phone, Trash2,
-  Settings, Truck, Search, Globe,
+  Settings, Truck, Search, Globe, MapPin,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminAgreementManager } from '@/components/admin-agreement-manager'
@@ -216,6 +216,15 @@ export function AdminPage() {
                 <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                   <p>Owner: {s.owner?.fullName} ({s.owner?.matricNumber}) — {s.owner?.department} · {s.owner?.level} Level</p>
                   <p className="flex items-center gap-1 flex-wrap">Bank: {s.bankName} · {s.accountNumber} ({s.accountName}) · <Phone className="w-3 h-3 inline" /> {s.phoneNumber}</p>
+                  <p className="flex items-center gap-1 flex-wrap">
+                    <MapPin className="w-3 h-3 inline" /> Campus:{' '}
+                    <span className="text-foreground font-medium">
+                      {s.campus || <span className="text-amber-500">unset</span>}
+                    </span>
+                    {Array.isArray(s.campusKeys) && s.campusKeys.length > 1 && (
+                      <span className="text-muted-foreground">(+{s.campusKeys.length - 1} more)</span>
+                    )}
+                  </p>
                   <p>{s._count?.products || 0} listings · {s._count?.orders || 0} orders · ⭐ {s.rating?.toFixed?.(1) || 'New'}</p>
                 </div>
               </div>
@@ -252,6 +261,19 @@ export function AdminPage() {
                     reload()
                   }}><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve</Button>
                 )}
+                <Button size="sm" variant="outline" onClick={async () => {
+                  const input = prompt(
+                    "Campuses this storefront's listings are visible to (comma-separated).\nThe owner's primary campus is always kept.",
+                    s.campus || ''
+                  )
+                  if (input === null) return
+                  const campuses = input.split(',').map((c) => c.trim()).filter(Boolean)
+                  if (campuses.length === 0) { toast.error('Enter at least one campus'); return }
+                  const { error } = await api('/api/admin/storefronts', { method: 'POST', body: { storefrontId: s.id, action: 'set_campuses', campuses } })
+                  if (error) { toast.error(error); return }
+                  toast.success('Campuses updated')
+                  reload()
+                }}><MapPin className="w-3.5 h-3.5 mr-1" /> Campuses</Button>
                 <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={async () => {
                   if (!confirm(`PERMANENTLY delete the storefront "${s.name}"?\n\nThis erases the storefront, all its listings and their reviews/comments, and its order history from the database. The owner's account stays. This CANNOT be undone.`)) return
                   const { error } = await api('/api/admin/storefronts', { method: 'DELETE', body: { storefrontId: s.id } })

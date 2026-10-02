@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
         phone: user.phone,
         emailVerified: user.emailVerified,
         twoFactorEnabled: user.twoFactorEnabled,
+        currency: user.currency,
+        country: user.country,
+        institution: user.institution,
+        institutionType: user.institutionType,
       },
     })
     res.cookies.set('unimart_session', token, {

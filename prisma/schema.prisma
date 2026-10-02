@@ -92,6 +92,13 @@ model Storefront {
   recipientCode   String?  // Paystack transfer recipient code (created once, reused)
   // Food category needs admin approval
   status          String   @default("active") // "active" | "pending_approval" | "suspended" | "rejected"
+  // Campus scoping. `campus` is the human-readable primary campus (the owner's
+  // institution) shown in the UI; `campusKeys` is the set of normalized campus
+  // keys this storefront is visible to (the primary one, plus any an admin adds).
+  // A viewer sees a listing only when their own campus key is in `campusKeys`.
+  // Both are nullable/defaulted so existing rows are unaffected.
+  campus          String?
+  campusKeys      String[] @default([])
   rating          Float    @default(0)
   totalSales      Float    @default(0)
   createdAt       DateTime @default(now())

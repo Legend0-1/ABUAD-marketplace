@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
 import { tryVerifyAccount } from '@/lib/paystack'
+import { campusKeyFor, campusLabel } from '@/lib/campus'
 
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // A storefront must belong to a campus so its listings can be scoped. The
+    // campus is the owner's institution, which is guaranteed set at registration
+    // (and re-settable via the campus-setup prompt).
+    const campus = campusLabel(user.institution)
+    if (!campus) {
+      return NextResponse.json({ error: 'Set your campus before creating a storefront', needsCampus: true }, { status: 400 })
+    }
 
     const body = await req.json()
     const {
@@ -60,6 +69,9 @@ export async function POST(req: NextRequest) {
           name, description, type,
           bankName, bankCode: finalBankCode, accountName: finalAccountName, accountNumber, phoneNumber, contactEmail,
           status,
+          // Scope this storefront's listings to the owner's campus.
+          campus,
+          campusKeys: [campusKeyFor(campus)],
         },
       }),
       db.agreementSignature.create({

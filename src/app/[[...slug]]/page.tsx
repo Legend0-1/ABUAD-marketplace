@@ -8,6 +8,7 @@ import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Sidebar } from '@/components/sidebar'
 import { AuthModal } from '@/components/auth-modal'
+import { CampusGate } from '@/components/campus-gate'
 import { ToastStack } from '@/components/toast-stack'
 import { HomePage } from '@/views/home'
 import { CategoryPage } from '@/views/category'
@@ -131,10 +132,15 @@ export default function Home() {
       <div className="flex flex-col min-h-screen lg:pl-[76px]">
         <Header />
         <main className="flex-1">
-          {view.name === 'home' && <HomePage />}
-          {view.name === 'category' && <CategoryPage slug={view.slug} name={view.categoryName} />}
-          {view.name === 'product' && <ProductPage productId={view.id} />}
-          {view.name === 'search' && <SearchPage q={view.q} />}
+          {/* Browse surfaces are campus-scoped: logged-out visitors see a
+              sign-in prompt, and users without a campus are asked to set one.
+              Account/utility views below stay reachable so a user can still
+              get to their profile to fix their campus. */}
+          {view.name === 'home' && <CampusGate><HomePage /></CampusGate>}
+          {view.name === 'category' && <CampusGate><CategoryPage slug={view.slug} name={view.categoryName} /></CampusGate>}
+          {view.name === 'product' && <CampusGate><ProductPage productId={view.id} /></CampusGate>}
+          {view.name === 'search' && <CampusGate><SearchPage q={view.q} /></CampusGate>}
+          {view.name === 'storefrontView' && <CampusGate><StorefrontViewPage ownerId={view.ownerId} /></CampusGate>}
           {view.name === 'sell' && <SellPage />}
           {view.name === 'storefront' && <StorefrontPage />}
           {view.name === 'seller-dashboard' && <SellerDashboardPage />}

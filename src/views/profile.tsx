@@ -13,11 +13,12 @@ import {
 } from '@/components/ui/dialog'
 import { ProductCard } from '@/components/product-card'
 import { api } from '@/lib/api'
-import { Store, Package, MessageSquare, ChevronRight, ShieldCheck, Edit, Loader2, Camera } from 'lucide-react'
+import { Store, Package, MessageSquare, ChevronRight, ShieldCheck, Edit, Loader2, Camera, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { ReferralSummaryCard } from '@/components/referral-summary-card'
 import { EmailVerificationBanner } from '@/components/email-verification-banner'
 import { DepartmentSelect } from '@/components/department-select'
+import { CampusSetupModal } from '@/components/campus-setup-modal'
 
 export function ProfilePage() {
   const { user, setUser, setView } = useStore()
@@ -29,6 +30,7 @@ export function ProfilePage() {
   const [editOpen, setEditOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ fullName: '', phone: '', department: '', level: '', profilePicture: '' })
+  const [campusOpen, setCampusOpen] = useState(false)
 
   useEffect(() => {
     if (!user) { setLoading(false); return }
@@ -101,6 +103,22 @@ export function ProfilePage() {
       </div>
 
       <EmailVerificationBanner />
+
+      {/* Campus — what scopes every listing this student sees. */}
+      <div className="bg-card border rounded-lg p-3 sm:p-4 mb-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+          <MapPin className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground">Your campus</p>
+          <p className="font-medium truncate">
+            {user.institution || <span className="text-amber-500">Not set — set it to see listings</span>}
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setCampusOpen(true)}>
+          {user.institution ? 'Change' : 'Set campus'}
+        </Button>
+      </div>
 
       <div className="bg-card border rounded-lg overflow-hidden mb-4">
         <div className="amazon-accent-bar h-2" />
@@ -235,6 +253,8 @@ export function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CampusSetupModal open={campusOpen} onOpenChange={setCampusOpen} />
     </div>
   )
 }

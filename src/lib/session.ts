@@ -17,6 +17,12 @@ export type SessionUser = {
   phone: string | null
   emailVerified: boolean
   currency: string | null
+  // Campus scoping: the institution the student registered under (free text),
+  // plus the country/type it came from. `institution` is the campus identity
+  // that scopes which listings this user can see.
+  country: string | null
+  institution: string | null
+  institutionType: string | null
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -44,6 +50,9 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
         phone: true,
         emailVerified: true,
         currency: true,
+        country: true,
+        institution: true,
+        institutionType: true,
       },
     })
     if (!user) return null
