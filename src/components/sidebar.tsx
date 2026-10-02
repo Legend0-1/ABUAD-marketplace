@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
 import {
-  Home, Store, Package, MessageSquare, Truck, ShieldCheck, LayoutDashboard,
+  Home, Store, Package, MessageSquare, Truck, ShieldCheck, LayoutDashboard, BarChart3,
   Sparkles, ChevronDown, X, Plus, LifeBuoy,
   Shirt, WashingMachine, Printer, Footprints, Smartphone, BookOpen,
   Plug, BedDouble, Tag, FileText,
@@ -48,6 +48,7 @@ export function Sidebar() {
     { label: 'Home', icon: Home, active: view.name === 'home', onClick: () => go({ name: 'home' }) },
     { label: 'Sell an Item', icon: Plus, active: view.name === 'sell', onClick: () => go({ name: 'sell' }, true), auth: true },
     { label: 'My Storefront', icon: Store, active: view.name === 'storefront', onClick: () => go({ name: 'storefront' }, true), auth: true },
+    { label: 'Seller Dashboard', icon: BarChart3, active: view.name === 'seller-dashboard', onClick: () => go({ name: 'seller-dashboard' }, true), auth: true },
     { label: 'Orders', icon: Package, active: view.name === 'orders', onClick: () => go({ name: 'orders' }, true), auth: true },
     { label: 'Inbox', icon: MessageSquare, active: view.name === 'inbox' || view.name === 'inboxThread', onClick: () => go({ name: 'inbox' }, true), auth: true },
     { label: 'Deliveries', icon: Truck, active: view.name === 'deliveries', onClick: () => go({ name: 'deliveries' }, true), auth: true },

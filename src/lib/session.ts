@@ -16,6 +16,7 @@ export type SessionUser = {
   referralCode: string | null
   phone: string | null
   emailVerified: boolean
+  currency: string | null
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -42,6 +43,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
         referralCode: true,
         phone: true,
         emailVerified: true,
+        currency: true,
       },
     })
     if (!user) return null

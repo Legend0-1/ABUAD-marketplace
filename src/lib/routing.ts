@@ -9,6 +9,7 @@ export function viewToPath(view: View): string {
     case 'search': return `/search?q=${encodeURIComponent(view.q)}`
     case 'sell': return '/sell'
     case 'storefront': return '/storefront'
+    case 'seller-dashboard': return '/dashboard'
     case 'storefrontView': return `/store/${encodeURIComponent(view.ownerId)}`
     case 'orders': return '/orders'
     case 'inbox': return '/inbox'
@@ -48,6 +49,7 @@ export function pathToView(pathname: string, search: URLSearchParams): View | nu
     case 'search': return { name: 'search', q: search.get('q') || '' }
     case 'sell': return { name: 'sell' }
     case 'storefront': return { name: 'storefront' }
+    case 'dashboard': return { name: 'seller-dashboard' }
     case 'store': return second ? { name: 'storefrontView', ownerId: decodeURIComponent(second) } : null
     case 'orders': return { name: 'orders' }
     case 'inbox': return second ? { name: 'inboxThread', conversationId: decodeURIComponent(second) } : { name: 'inbox' }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
+import { normalizeCurrency, CURRENCIES } from '@/lib/currency'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +49,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Profile picture is too large' }, { status: 413 })
     }
     data.profilePicture = v || null
+  }
+  if (typeof body.currency === 'string' && body.currency.trim()) {
+    // Only accept a currency we actually support; anything else is rejected
+    // rather than silently stored, so the display layer never sees junk.
+    const code = body.currency.trim().toUpperCase()
+    if (!CURRENCIES[code]) {
+      return NextResponse.json({ error: 'Unsupported currency' }, { status: 400 })
+    }
+    data.currency = normalizeCurrency(code)
   }
 
   if (Object.keys(data).length === 0) {

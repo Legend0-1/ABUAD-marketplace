@@ -6,6 +6,9 @@ import { generateUniqueReferralCode } from '@/lib/referral'
 import { sendVerificationEmail, sendRegistrationPendingEmail } from '@/lib/email'
 import { logAudit } from '@/lib/audit'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getEnabledCountryCodes } from '@/lib/settings'
+import { getCountry, getCountryCurrency, institutionCategoryOf, getInstitutionCategories, isKnownCategory } from '@/lib/institutions'
+import { normalizeCurrency } from '@/lib/currency'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
     await bootstrapMarketplace()
 
     const body = await req.json()
-    const { email, password, fullName, matricNumber, level, department, profilePicture, referralCode, phone } = body
+    const { email, password, fullName, matricNumber, level, department, profilePicture, referralCode, phone, country, institutionCategory, institution } = body
 
     if (!email || !password || !fullName || !matricNumber || !level || !department || !phone) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -32,6 +35,33 @@ export async function POST(req: NextRequest) {
     if (!referralCode?.trim()) {
       return NextResponse.json({ error: 'A referral code is required to join UNI MART' }, { status: 400 })
     }
+
+    // Country + institution. The platform is multi-country; the admin controls
+    // which countries are open for registration. Validate the submitted country
+    // against the enabled list + catalog, and keep the institution as free text
+    // (a known catalog name, or an "Other" value the student typed in).
+    const countryCode = String(country || '').trim().toUpperCase()
+    const institutionCat = String(institutionCategory || '').trim()
+    const institutionName = String(institution || '').trim()
+    if (!countryCode || !institutionName) {
+      return NextResponse.json({ error: 'Country and institution are required' }, { status: 400 })
+    }
+    const enabledCountries = await getEnabledCountryCodes()
+    if (!getCountry(countryCode) || !enabledCountries.includes(countryCode)) {
+      return NextResponse.json({ error: 'Registration is not open for the selected country yet' }, { status: 400 })
+    }
+    // Require an institution type when the country actually has categories.
+    if (getInstitutionCategories(countryCode).length > 0 && !institutionCat) {
+      return NextResponse.json({ error: 'Please select your institution type' }, { status: 400 })
+    }
+    // Resolve the stored institution type: trust the catalog for a listed school;
+    // otherwise fall back to the category the student picked (if it's a real one).
+    // A free-typed school under "Other / Not listed" stays null.
+    const institutionType =
+      institutionCategoryOf(countryCode, institutionName) ??
+      (isKnownCategory(countryCode, institutionCat) ? institutionCat : null)
+    // Default the user's display currency to their country's local currency.
+    const currency = normalizeCurrency(getCountryCurrency(countryCode))
 
     const existing = await db.user.findFirst({
       where: { OR: [{ email: email.toLowerCase() }, { matricNumber: matricNumber.toUpperCase() }] },
@@ -59,6 +89,10 @@ export async function POST(req: NextRequest) {
         profilePicture: profilePicture || null,
         referralCode: newReferralCode,
         referredById: referrer.id,
+        country: countryCode,
+        institution: institutionName,
+        institutionType: institutionType ?? null,
+        currency,
       },
     })
 

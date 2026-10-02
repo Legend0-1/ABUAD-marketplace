@@ -39,6 +39,16 @@ model User {
   twoFactorSecret   String?
   twoFactorEnabled  Boolean  @default(false)
   emailVerified   Boolean  @default(false)
+  // Preferred display currency (ISO 4217 code, e.g. "NGN", "USD"). Null means
+  // NGN. Presentation only — all stored amounts remain in NGN; see lib/currency.
+  currency        String?
+  // Country (ISO alpha-2, e.g. "NG") and institution the student registered
+  // under. Institution is free text (a catalog name, or a typed "Other" value);
+  // institutionType is the catalog category (e.g. "Federal University") or null
+  // for an "Other" institution. All nullable so existing users aren't affected.
+  country         String?
+  institution     String?
+  institutionType String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
+import { COUNTRIES, hasInstitutions, getAllInstitutions } from '@/lib/institutions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import {
   Users, Store, Package, MessageSquare, AlertTriangle, Banknote, TrendingUp,
   CheckCircle2, XCircle, Eye, ShieldCheck, Send, Mail, ChevronRight, Loader2, Star, Phone, Trash2,
-  Settings, Truck, Search,
+  Settings, Truck, Search, Globe,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminAgreementManager } from '@/components/admin-agreement-manager'
@@ -544,7 +545,10 @@ export function AdminPage() {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-4">
-          <DeliverySettingsPanel />
+          <div className="space-y-6">
+            <DeliverySettingsPanel />
+            <CountryAccessPanel />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -769,6 +773,97 @@ function DeliverySettingsPanel() {
             </div>
             <p className="text-[11px] text-muted-foreground">Default is ₦1,000. Set to ₦0 to waive the platform fee.</p>
           </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CountryAccessPanel() {
+  const [enabled, setEnabled] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api<{ enabledCountries: string[] }>('/api/admin/settings').then(({ data }) => {
+      if (Array.isArray(data?.enabledCountries)) setEnabled(data.enabledCountries)
+      setLoading(false)
+    })
+  }, [])
+
+  const isOn = (code: string) => enabled.includes(code)
+  const toggle = (code: string) =>
+    setEnabled((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
+
+  const save = async () => {
+    setSaving(true)
+    const { data, error } = await api<{ enabledCountries: string[] }>('/api/admin/settings', {
+      method: 'PUT',
+      body: { enabledCountries: enabled },
+    })
+    setSaving(false)
+    if (error) { toast.error(error); return }
+    // API returns the canonical list (unknown codes dropped, never empty), so
+    // re-sync from it — this self-corrects if everything was toggled off.
+    if (Array.isArray(data?.enabledCountries)) setEnabled(data.enabledCountries)
+    toast.success('Country availability updated')
+  }
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <div className="bg-card border rounded-lg p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-primary" />
+          <h3 className="font-semibold text-sm">Countries open for registration</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Tick the countries where UNI MART operates. Students registering can only pick an enabled
+          country, and their institution list and local currency follow from that choice. Countries
+          whose institution catalog isn't ready yet are marked "Coming soon" and can't be enabled.
+        </p>
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : (
+          <>
+            <div className="divide-y rounded-md border">
+              {COUNTRIES.map((c) => {
+                const available = hasInstitutions(c.code)
+                const on = isOn(c.code)
+                const count = available ? getAllInstitutions(c.code).length : 0
+                return (
+                  <div key={c.code} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-lg leading-none">{c.flag}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{c.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {available ? `${count} institutions · ${c.currency}` : `Catalog coming soon · ${c.currency}`}
+                        </p>
+                      </div>
+                    </div>
+                    {available ? (
+                      <Button size="sm" variant={on ? 'default' : 'outline'} onClick={() => toggle(c.code)}>
+                        {on ? <><CheckCircle2 className="w-4 h-4 mr-1.5" /> Enabled</> : 'Enable'}
+                      </Button>
+                    ) : (
+                      <Badge variant="secondary">Coming soon</Badge>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <p className="text-[11px] text-muted-foreground">
+                At least one country stays enabled — Nigeria is kept on if you clear them all.
+              </p>
+              <Button onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Save
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </div>

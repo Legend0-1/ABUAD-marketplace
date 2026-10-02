@@ -14,6 +14,7 @@ export type SessionUser = {
   profilePicture: string | null
   isAdmin: boolean
   isHR?: boolean
+  currency?: string | null
 }
 
 export type View =
@@ -23,6 +24,7 @@ export type View =
   | { name: 'search'; q: string }
   | { name: 'sell' } // create listing
   | { name: 'storefront' } // my storefront dashboard
+  | { name: 'seller-dashboard' } // sales & earnings analytics
   | { name: 'storefrontView'; ownerId: string }
   | { name: 'orders' } // my orders (buy+sell)
   | { name: 'inbox' }

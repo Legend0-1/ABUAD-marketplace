@@ -15,6 +15,7 @@ import { ProductPage } from '@/views/product'
 import { SearchPage } from '@/views/search'
 import { SellPage } from '@/views/sell'
 import { StorefrontPage } from '@/views/storefront'
+import { SellerDashboardPage } from '@/views/seller-dashboard'
 import { StorefrontViewPage } from '@/views/storefront-view'
 import { OrdersPage } from '@/views/orders'
 import { InboxPage } from '@/views/inbox'
@@ -136,6 +137,7 @@ export default function Home() {
           {view.name === 'search' && <SearchPage q={view.q} />}
           {view.name === 'sell' && <SellPage />}
           {view.name === 'storefront' && <StorefrontPage />}
+          {view.name === 'seller-dashboard' && <SellerDashboardPage />}
           {view.name === 'storefrontView' && <StorefrontViewPage ownerId={view.ownerId} />}
           {view.name === 'orders' && <OrdersPage />}
           {view.name === 'inbox' && <InboxPage />}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Shield, ShieldCheck, Upload, X, GraduationCap, AlertCircle, Loader2, UserCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { DepartmentSelect } from '@/components/department-select'
+import { CountrySelect } from '@/components/country-select'
+import { InstitutionCategorySelect } from '@/components/institution-category-select'
+import { InstitutionSelect } from '@/components/institution-select'
+import type { CountryInfo } from '@/lib/institutions'
 
 
 const LEVELS = ['100', '200', '300', '400', '500', '600']
@@ -24,9 +28,26 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [mode, setMode] = useState<'register' | 'login'>(authMode)
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState({
-    email: '', password: '', fullName: '', matricNumber: '', level: '', department: '', profilePicture: '' as string, referralCode: '', phone: '',
+    email: '', password: '', fullName: '', matricNumber: '', level: '', department: '', profilePicture: '' as string, referralCode: '', phone: '', country: '', institutionCategory: '', institution: '',
   })
   const fileRef = useRef<HTMLInputElement>(null)
+  const [countries, setCountries] = useState<CountryInfo[]>([])
+
+  // Load the countries the admin has opened for registration (public endpoint).
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await api<{ countries: CountryInfo[] }>('/api/countries')
+      if (cancelled || !data) return
+      setCountries(data.countries)
+      // Preselect when exactly one country is available (Nigeria-only today).
+      if (data.countries.length === 1) {
+        setForm((f) => (f.country ? f : { ...f, country: data.countries[0].code }))
+      }
+    })()
+    return () => { cancelled = true }
+  }, [open])
 
   // Sync local mode when authMode changes externally
   useState(() => {
@@ -45,7 +66,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   }
 
   const submitRegister = async () => {
-    if (!form.email || !form.password || !form.fullName || !form.matricNumber || !form.level || !form.department || !form.phone) {
+    if (!form.country || !form.institutionCategory || !form.institution.trim() || !form.email || !form.password || !form.fullName || !form.matricNumber || !form.level || !form.department || !form.phone) {
       toast.error('All fields are required')
       return
     }
@@ -62,7 +83,7 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       return
     }
     setBusy(true)
-    const { data, error } = await api('/api/auth/register', { method: 'POST', body: { ...form, department: form.department.trim() } })
+    const { data, error } = await api('/api/auth/register', { method: 'POST', body: { ...form, department: form.department.trim(), institution: form.institution.trim() } })
     setBusy(false)
     if (error) {
       toast.error('Registration failed', { description: error })
@@ -175,6 +196,35 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             ) : (
             <>
             <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="country">Country <span className="text-destructive">*</span></Label>
+                <CountrySelect
+                  id="country"
+                  value={form.country}
+                  countries={countries}
+                  onChange={(v) => setForm((f) => ({ ...f, country: v, institutionCategory: '', institution: '' }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="institutionCategory">Institution Type <span className="text-destructive">*</span></Label>
+                <InstitutionCategorySelect
+                  id="institutionCategory"
+                  countryCode={form.country}
+                  value={form.institutionCategory}
+                  onChange={(v) => setForm((f) => ({ ...f, institutionCategory: v, institution: '' }))}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="institution">Institution <span className="text-destructive">*</span></Label>
+                <InstitutionSelect
+                  key={form.country + '|' + form.institutionCategory}
+                  id="institution"
+                  countryCode={form.country}
+                  category={form.institutionCategory}
+                  value={form.institution}
+                  onChange={(v) => setForm((f) => ({ ...f, institution: v }))}
+                />
+              </div>
               <div>
                 <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
                 <Input id="fullName" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Chioma Okafor" />
