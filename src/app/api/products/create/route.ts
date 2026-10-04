@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    // Identity (KYC) gate — selling of any kind requires a verified identity.
+    // Defense in depth alongside the storefront-setup gate: even an owner whose
+    // verification was later revoked can't keep adding listings.
+    if (!user.idVerified) {
+      return NextResponse.json({ error: 'Verify your identity before listing items for sale.', needsVerification: true }, { status: 403 })
+    }
+
     const storefront = await db.storefront.findUnique({ where: { ownerId: user.id } })
     if (!storefront) {
       return NextResponse.json({ error: 'You must set up a storefront first' }, { status: 400 })

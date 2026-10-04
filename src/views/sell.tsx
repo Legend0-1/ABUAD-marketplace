@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Store, Upload, X, ImageIcon, Video, Volume2, Loader2, AlertCircle, CheckCircle2, ChevronRight, Lightbulb } from 'lucide-react'
+import { VerificationGate } from '@/components/verification-gate'
 import { toast } from 'sonner'
 
 type MediaItem = { type: 'image' | 'video' | 'audio'; url: string; name: string }
@@ -31,6 +32,9 @@ export function SellPage() {
 
   useEffect(() => {
     if (!user) { setAuthModalOpen(true); return }
+    // Unverified users can't list — the render path sends them to verify first,
+    // so skip the storefront/category fetch for them.
+    if (!user.idVerified) { setLoading(false); return }
     (async () => {
       setLoading(true)
       const [sf, cats] = await Promise.all([
@@ -92,6 +96,10 @@ export function SellPage() {
 
   if (!user) {
     return <div className="max-w-3xl mx-auto px-4 py-16 text-center text-muted-foreground">Please sign in to sell.</div>
+  }
+
+  if (!user.idVerified) {
+    return <VerificationGate context="listing" />
   }
 
   if (loading) {

@@ -14,6 +14,7 @@ export type SessionUser = {
   profilePicture: string | null
   isAdmin: boolean
   isHR?: boolean
+  idVerified?: boolean
   currency?: string | null
   // Campus scoping: the institution the student registered under. Null/empty
   // means their campus hasn't been set yet, so the browse gate prompts for it.
@@ -38,6 +39,7 @@ export type View =
   | { name: 'admin' }
   | { name: 'agreement' }
   | { name: 'setup-storefront' }
+  | { name: 'verify-identity' } // KYC: submit government ID to be able to sell
   | { name: 'about' }
   | { name: 'campus-safety' }
   | { name: 'service-charge' }

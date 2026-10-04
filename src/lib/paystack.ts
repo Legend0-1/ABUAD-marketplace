@@ -171,6 +171,16 @@ export async function createTransferRecipient(params: {
   return data.data as { recipient_code: string }
 }
 
+// Possible Paystack transfer statuses:
+//   "success"   -> money has left our balance and reached (or is reaching) the seller
+//   "pending" / "processing" / "queued" / "received" -> accepted, settling at the bank
+//   "otp"       -> account has Transfer OTP enabled; MUST be finalized with the OTP
+//                  Paystack just sent to the business owner (finalizeTransfer below)
+//   "failed" / "reversed" / "abandoned" -> did not go through
+export type TransferStatus =
+  | 'success' | 'pending' | 'processing' | 'queued' | 'received'
+  | 'otp' | 'failed' | 'reversed' | 'abandoned' | string
+
 export async function initiateTransfer(params: {
   amountNaira: number
   recipientCode: string
@@ -187,7 +197,37 @@ export async function initiateTransfer(params: {
       reason: params.reason,
     }),
   })
-  return data.data as { transfer_code: string; status: string }
+  return data.data as { transfer_code: string; status: TransferStatus; reference: string; id: number }
+}
+
+/** Completes a transfer that came back with status "otp". The business owner
+ *  receives the OTP from Paystack (SMS/email) the moment initiateTransfer runs;
+ *  passing it here actually releases the money. If you'd rather not do this on
+ *  every payout, disable "OTP for transfers" in Paystack Dashboard ->
+ *  Settings -> Preferences, and transfers will go straight through. */
+export async function finalizeTransfer(params: { transferCode: string; otp: string }) {
+  const data = await paystackFetch('/transfer/finalize_transfer', {
+    method: 'POST',
+    body: JSON.stringify({ transfer_code: params.transferCode, otp: params.otp }),
+  })
+  return data.data as { transfer_code: string; status: TransferStatus; reference?: string }
+}
+
+/** Server-side source of truth for a transfer's current state, looked up by the
+ *  reference we assigned. Used to reconcile webhooks and to check an existing
+ *  transfer before retrying (so we never fire a duplicate payout). */
+export async function verifyTransfer(reference: string) {
+  const data = await paystackFetch(`/transfer/verify/${encodeURIComponent(reference)}`)
+  return data.data as { status: TransferStatus; transfer_code?: string; reference: string; reason?: string }
+}
+
+/** Available balance(s) on the platform's Paystack account, in naira. Only
+ *  *settled* funds show here — money from very recent payments may still be in
+ *  pending settlement (T+1 in Nigeria) and cannot be transferred out yet. */
+export async function getBalance(): Promise<{ currency: string; balance: number }[]> {
+  const data = await paystackFetch('/balance')
+  const rows = (data.data as { currency: string; balance: number }[]) || []
+  return rows.map((b) => ({ currency: b.currency, balance: (b.balance || 0) / 100 }))
 }
 
 // --- Webhook signature verification ---

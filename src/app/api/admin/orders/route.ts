@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
-import { checkAndCreateReferralCommission } from '@/lib/referral'
-import { refundTransaction, resolveBankCode, createTransferRecipient, initiateTransfer } from '@/lib/paystack'
+import { refundTransaction } from '@/lib/paystack'
+import { releaseOrderPayout } from '@/lib/payout'
 import { restockForRefundedOrder } from '@/lib/inventory'
 
 export async function GET() {
@@ -78,57 +78,34 @@ export async function POST(req: Request) {
     await notifyBoth(order, `Order ${order.reference} has been refunded to the buyer. Reason: ${note || 'admin review'}`)
     return NextResponse.json({ order: updated, warning: refundWarning })
   } else if (action === 'release') {
+    // Admin sides with the seller: resolve the dispute and pay out. Record the
+    // decision as a fact first, then let the shared payout engine move the money
+    // -- it handles OTP / processing / failure and credits the sale exactly once,
+    // so a stuck transfer can be retried from the Payouts tab instead of being lost.
     const updated = await db.order.update({
       where: { id: orderId },
-      data: { status: 'completed', acknowledged: true, acknowledgedAt: new Date() },
-    })
-    await db.storefront.update({
-      where: { id: order.storefrontId },
-      data: { totalSales: { increment: order.sellerPayout } },
+      data: { status: 'completed', acknowledged: true, acknowledgedAt: order.acknowledgedAt ?? new Date() },
     })
     await logAudit({ actor: admin, action: 'order.release', targetType: 'Order', targetId: order.id, detail: `${order.reference}: ₦${order.sellerPayout.toLocaleString()} released — ${note || 'admin review'}` })
 
-    let payoutWarning: string | undefined
-    try {
-      let storefront = order.storefront
-      let recipientCode = storefront.recipientCode
-      if (!recipientCode) {
-        let bankCode = storefront.bankCode
-        if (!bankCode) {
-          bankCode = await resolveBankCode(storefront.bankName)
-          if (!bankCode) throw new Error(`Could not resolve bank code for "${storefront.bankName}"`)
-        }
-        const recipient = await createTransferRecipient({
-          accountName: storefront.accountName,
-          accountNumber: storefront.accountNumber,
-          bankCode,
-        })
-        recipientCode = recipient.recipient_code
-        storefront = await db.storefront.update({ where: { id: storefront.id }, data: { bankCode, recipientCode } })
-      }
+    const payout = await releaseOrderPayout(orderId)
+    await logAudit({
+      actor: admin,
+      action: payout.ok ? 'order.release_processed' : 'order.release_failed',
+      targetType: 'Order',
+      targetId: order.id,
+      detail: payout.message,
+    })
 
-      const transferRef = `RELEASE-${order.reference}`
-      const transfer = await initiateTransfer({
-        amountNaira: order.sellerPayout,
-        recipientCode,
-        reference: transferRef,
-        reason: `Admin-resolved payout for order ${order.reference}`,
-      })
-      await db.order.update({
-        where: { id: orderId },
-        data: { payoutStatus: transfer.status === 'success' ? 'success' : 'processing', transferReference: transferRef, payoutAt: new Date() },
-      })
-      await logAudit({ actor: admin, action: 'order.release_processed', targetType: 'Order', targetId: order.id, detail: `Paystack transfer initiated for ₦${order.sellerPayout.toLocaleString()}` })
-    } catch (transferError: any) {
-      console.error('admin release payout failed', transferError)
-      payoutWarning = 'The order was marked completed, but the actual Paystack payout to the seller failed to process automatically. This needs manual follow-up.'
-      await db.order.update({ where: { id: orderId }, data: { payoutStatus: 'failed' } })
-      await logAudit({ actor: admin, action: 'order.release_failed', targetType: 'Order', targetId: order.id, detail: String(transferError?.message || transferError) })
-    }
+    const statusWord = payout.payoutStatus === 'success' ? 'complete' : 'being processed'
+    await notifyBoth(order, `Order ${order.reference} has been resolved. Payout of ₦${order.sellerPayout.toLocaleString()} to the seller is ${statusWord}. Note: ${note || 'admin review'}`)
 
-    await notifyBoth(order, `Order ${order.reference} has been resolved. Payout of ₦${order.sellerPayout.toLocaleString()} released to the seller. Note: ${note || 'admin review'}`)
-    await checkAndCreateReferralCommission(order.buyerId)
-    return NextResponse.json({ order: updated, warning: payoutWarning })
+    const warning = payout.ok
+      ? undefined
+      : payout.needsOtp
+        ? 'The order is resolved, but the payout needs the Paystack OTP to release — finish it from the Payouts tab.'
+        : `The order is resolved, but the Paystack payout did not go through (${payout.message}). Retry it from the Payouts tab.`
+    return NextResponse.json({ order: updated, warning })
   } else {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   }

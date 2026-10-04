@@ -25,6 +25,7 @@ import { ProfilePage } from '@/views/profile'
 import { AdminPage } from '@/views/admin'
 import { AgreementPage } from '@/views/agreement'
 import { SetupStorefrontPage } from '@/views/setup-storefront'
+import { VerifyIdentityPage } from '@/views/verify-identity'
 import { CartDrawer } from '@/components/cart-drawer'
 import { AboutPage } from '@/views/about'
 import { CampusSafetyPage } from '@/views/campus-safety'
@@ -152,6 +153,7 @@ export default function Home() {
           {view.name === 'admin' && <AdminPage />}
           {view.name === 'agreement' && <AgreementPage />}
           {view.name === 'setup-storefront' && <SetupStorefrontPage />}
+          {view.name === 'verify-identity' && <VerifyIdentityPage />}
           {view.name === 'about' && <AboutPage />}
           {view.name === 'campus-safety' && <CampusSafetyPage />}
           {view.name === 'service-charge' && <ServiceChargePage />}

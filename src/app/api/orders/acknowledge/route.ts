@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
-import { resolveBankCode, createTransferRecipient, initiateTransfer } from '@/lib/paystack'
-import { checkAndCreateReferralCommission } from '@/lib/referral'
+import { releaseOrderPayout } from '@/lib/payout'
 
 // Buyer acknowledges receipt -> triggers a real payout to the seller's bank account
-// via Paystack Transfers, out of the platform's escrow balance.
+// via Paystack Transfers, out of the platform's escrow balance. The actual money
+// movement is delegated to releaseOrderPayout(), which handles every Paystack
+// transfer state (success / processing / OTP-required / failed) and is safe to
+// retry from the admin Payouts screen if it doesn't settle immediately.
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -38,64 +40,19 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // --- Trigger the real payout to the seller ---
-    try {
-      let storefront = order.storefront
-      let recipientCode = storefront.recipientCode
+    // --- Trigger the real payout to the seller (idempotent, OTP-aware) ---
+    // Never let a payout hiccup undo the buyer's acknowledgment: the engine
+    // flags the order for admin follow-up instead of throwing.
+    const payout = await releaseOrderPayout(orderId).catch((e) => {
+      console.error('payout error for order', orderId, e)
+      return { ok: false, payoutStatus: 'failed', message: 'Payout could not be started.' } as const
+    })
 
-      if (!recipientCode) {
-        let bankCode = storefront.bankCode
-        if (!bankCode) {
-          bankCode = await resolveBankCode(storefront.bankName)
-          if (!bankCode) throw new Error(`Could not resolve bank code for "${storefront.bankName}"`)
-        }
-        const recipient = await createTransferRecipient({
-          accountName: storefront.accountName,
-          accountNumber: storefront.accountNumber,
-          bankCode,
-        })
-        recipientCode = recipient.recipient_code
-        storefront = await db.storefront.update({
-          where: { id: storefront.id },
-          data: { bankCode, recipientCode },
-        })
-      }
-
-      const transferRef = `PAYOUT-${order.reference}`
-      const transfer = await initiateTransfer({
-        amountNaira: order.sellerPayout,
-        recipientCode,
-        reference: transferRef,
-        reason: `Payout for order ${order.reference}`,
-      })
-
-      await db.order.update({
-        where: { id: orderId },
-        data: {
-          status: 'completed',
-          payoutStatus: transfer.status === 'success' ? 'success' : 'processing',
-          transferReference: transferRef,
-          payoutAt: new Date(),
-        },
-      })
-
-      await db.storefront.update({
-        where: { id: order.storefrontId },
-        data: { totalSales: { increment: order.sellerPayout } },
-      })
-
-      await checkAndCreateReferralCommission(order.buyerId)
-    } catch (payoutError: any) {
-      // Buyer's acknowledgment still stands; flag the payout for admin follow-up
-      // rather than silently losing the seller's money.
-      console.error('payout error for order', orderId, payoutError)
-      await db.order.update({
-        where: { id: orderId },
-        data: { payoutStatus: 'failed' },
-      })
-    }
-
-    // Notify seller via conversation
+    // Notify seller via conversation. Keep the tone reassuring regardless of the
+    // payout's internal state — admins resolve any stuck transfer behind the scenes.
+    const payoutLine = payout.payoutStatus === 'success'
+      ? `Your payout of ₦${order.sellerPayout.toLocaleString()} has been sent to your bank account.`
+      : `The platform is processing your payout of ₦${order.sellerPayout.toLocaleString()} to your bank account.`
     const conv = await db.conversation.findFirst({
       where: {
         OR: [
@@ -109,7 +66,7 @@ export async function POST(req: NextRequest) {
         data: {
           conversationId: conv.id,
           senderId: user.id,
-          body: `I have acknowledged receipt of order ${order.reference}. The platform will now process your payout of ₦${order.sellerPayout.toLocaleString()} to your bank account. Thank you!`,
+          body: `I have acknowledged receipt of order ${order.reference}. ${payoutLine} Thank you!`,
         },
       })
     }

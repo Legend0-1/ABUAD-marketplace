@@ -120,6 +120,30 @@ export function ProfilePage() {
         </Button>
       </div>
 
+      {/* Identity verification — required before a student can sell. */}
+      <div className="bg-card border rounded-lg p-3 sm:p-4 mb-4 flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${user.idVerified ? 'bg-green-500/15' : 'bg-amber-500/15'}`}>
+          <ShieldCheck className={`w-5 h-5 ${user.idVerified ? 'text-green-600' : 'text-amber-500'}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground">Identity verification</p>
+          <p className="font-medium truncate">
+            {user.idVerified
+              ? 'Verified — you can sell on UNI MART'
+              : <span className="text-amber-500">Not verified — required to sell</span>}
+          </p>
+        </div>
+        {user.idVerified ? (
+          <Badge variant="secondary" className="shrink-0 text-green-700 dark:text-green-400">
+            <ShieldCheck className="w-3 h-3 mr-1" /> Verified
+          </Badge>
+        ) : (
+          <Button size="sm" variant="outline" onClick={() => setView({ name: 'verify-identity' })}>
+            Verify now
+          </Button>
+        )}
+      </div>
+
       <div className="bg-card border rounded-lg overflow-hidden mb-4">
         <div className="amazon-accent-bar h-2" />
         <div className="p-4 sm:p-6">

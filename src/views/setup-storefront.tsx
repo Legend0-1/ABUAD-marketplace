@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { BankAccountFields } from '@/components/bank-account-fields'
+import { VerificationGate } from '@/components/verification-gate'
 import {
   ChevronRight, Store, ShieldCheck, Banknote, Phone, Mail, Loader2, ScrollText,
   CheckCircle2, AlertCircle,
@@ -32,6 +33,9 @@ export function SetupStorefrontPage() {
 
   useEffect(() => {
     if (!user) { setAuthModalOpen(true); return }
+    // Identity-verification gate: don't bother loading the agreement/storefront
+    // for an unverified user — the render path below sends them to verify first.
+    if (!user.idVerified) { setLoading(false); return }
     (async () => {
       // Check existing storefront first
       const sf = await api<{ storefront: any }>('/api/storefront/me')
@@ -73,6 +77,10 @@ export function SetupStorefrontPage() {
 
   if (!user) {
     return <div className="max-w-3xl mx-auto px-4 py-16 text-center text-muted-foreground">Please sign in.</div>
+  }
+
+  if (!user.idVerified) {
+    return <VerificationGate context="storefront" />
   }
 
   if (loading) {

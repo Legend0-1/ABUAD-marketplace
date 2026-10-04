@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
 import {
   Search, ShoppingCart, User, Menu, Store, Package, MessageSquare,
-  LayoutDashboard, LogOut, ChevronDown, Shield, Truck, Plus, Sun, Moon,
+  LayoutDashboard, LogOut, ChevronDown, Shield, Truck, Plus, Sun, Moon, ShieldCheck,
 } from 'lucide-react'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
@@ -203,6 +203,13 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => sv({ name: 'sell' })} className="cursor-pointer">
                       <Package className="w-4 h-4 mr-2" /> Sell a Product / Service
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => sv({ name: 'verify-identity' })}
+                      className={`cursor-pointer ${user.idVerified ? '' : 'text-primary font-medium'}`}
+                    >
+                      <ShieldCheck className="w-4 h-4 mr-2" /> Verify Identity
+                      {!user.idVerified && <Badge className="ml-auto text-[10px]">Action needed</Badge>}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => sv({ name: 'inbox' })} className="cursor-pointer">
                       <MessageSquare className="w-4 h-4 mr-2" /> Inbox

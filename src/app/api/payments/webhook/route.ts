@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack'
 import { decrementStockForPaidOrder } from '@/lib/inventory'
+import { reconcilePayoutByReference } from '@/lib/payout'
 
 // Configure this exact URL in Paystack Dashboard > Settings > API Keys & Webhooks:
 //   https://<your-domain>/api/payments/webhook
@@ -14,6 +15,18 @@ export async function POST(req: NextRequest) {
   }
 
   const event = JSON.parse(rawBody)
+
+  // --- Seller payouts (platform -> seller bank account) -----------------------
+  // Transfers settle asynchronously, so Paystack tells us the final outcome here.
+  // We never trust the webhook body: reconcilePayoutByReference re-verifies the
+  // transfer with Paystack before flipping the order's payout state.
+  if (event.event === 'transfer.success' || event.event === 'transfer.failed' || event.event === 'transfer.reversed') {
+    const reference = event.data?.reference as string | undefined
+    if (reference) {
+      await reconcilePayoutByReference(reference).catch((e) => console.error('payout reconcile failed', reference, e))
+    }
+    return NextResponse.json({ received: true })
+  }
 
   if (event.event === 'charge.success') {
     const reference = event.data.reference as string

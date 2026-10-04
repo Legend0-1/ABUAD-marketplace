@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
-  Package, ChevronRight, CheckCircle2, AlertCircle, MessageSquare, Loader2, MapPin,
+  Package, ChevronRight, CheckCircle2, AlertCircle, MessageSquare, Loader2, MapPin, XCircle,
 } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -23,6 +23,8 @@ export function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [disputeOrder, setDisputeOrder] = useState<any>(null)
   const [disputeReason, setDisputeReason] = useState('')
+  const [cancelOrder, setCancelOrder] = useState<any>(null)
+  const [cancelReason, setCancelReason] = useState('')
   const [busy, setBusy] = useState(false)
 
   const reload = async () => {
@@ -64,6 +66,18 @@ export function OrdersPage() {
     toast.success('Dispute submitted', { description: 'The admin will review and contact you.' })
     setDisputeOrder(null)
     setDisputeReason('')
+    reload()
+  }
+
+  const submitCancel = async () => {
+    if (!cancelOrder) return
+    setBusy(true)
+    const { error } = await api('/api/orders/cancel', { method: 'POST', body: { orderId: cancelOrder.id, reason: cancelReason } })
+    setBusy(false)
+    if (error) { toast.error(error); return }
+    toast.success('Order cancelled', { description: 'The seller has been notified.' })
+    setCancelOrder(null)
+    setCancelReason('')
     reload()
   }
 
@@ -115,7 +129,7 @@ export function OrdersPage() {
               <Button onClick={() => setView({ name: 'home' })}>Start Shopping</Button>
             </div>
           ) : (
-            orders.asBuyer.map((o) => <BuyerOrderCard key={o.id} order={o} onAck={() => acknowledge(o.id)} onDispute={() => setDisputeOrder(o)} onMessage={() => messageSeller(o.sellerId, o.reference)} onPay={() => pay(o.id)} busy={busy} />)
+            orders.asBuyer.map((o) => <BuyerOrderCard key={o.id} order={o} onAck={() => acknowledge(o.id)} onDispute={() => setDisputeOrder(o)} onCancel={() => setCancelOrder(o)} onMessage={() => messageSeller(o.sellerId, o.reference)} onPay={() => pay(o.id)} busy={busy} />)
           )}
         </TabsContent>
 
@@ -158,6 +172,32 @@ export function OrdersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!cancelOrder} onOpenChange={(o) => !o && setCancelOrder(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel this order?</DialogTitle>
+            <DialogDescription>
+              This only works while the order is still unpaid. It will be removed from the seller&apos;s pending list and can&apos;t be undone — you&apos;d need to place a new order. If you&apos;ve already paid, use Dispute instead.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label>Reason (optional)</Label>
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={3}
+              placeholder="Let the seller know why (optional)…"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelOrder(null)}>Keep order</Button>
+            <Button variant="destructive" onClick={submitCancel} disabled={busy}>
+              {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Cancel Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -167,11 +207,12 @@ function StatusBadge({ status }: { status: string }) {
     : status === 'disputed' ? 'bg-red-600 text-white'
     : status === 'acknowledged' ? 'bg-blue-600 text-white'
     : status === 'refunded' ? 'bg-slate-600 text-white'
+    : status === 'cancelled' ? 'bg-muted text-muted-foreground border'
     : 'bg-amber-500 text-white'
   return <Badge className={cls + ' capitalize'}>{status.replace('_', ' ')}</Badge>
 }
 
-function BuyerOrderCard({ order, onAck, onDispute, onMessage, onPay, busy }: { order: any; onAck: () => void; onDispute: () => void; onMessage: () => void; onPay: () => void; busy: boolean }) {
+function BuyerOrderCard({ order, onAck, onDispute, onCancel, onMessage, onPay, busy }: { order: any; onAck: () => void; onDispute: () => void; onCancel: () => void; onMessage: () => void; onPay: () => void; busy: boolean }) {
   const { setView } = useStore()
   const cover = order.product?.media?.[0]
   return (
@@ -203,9 +244,17 @@ function BuyerOrderCard({ order, onAck, onDispute, onMessage, onPay, busy }: { o
               <MessageSquare className="w-3.5 h-3.5 mr-1" /> Message Seller
             </Button>
             {order.status === 'pending' && (
-              <Button size="sm" className="bg-primary" onClick={onPay} disabled={busy}>
-                Pay ₦{order.totalAmount.toLocaleString()}
-              </Button>
+              <>
+                <Button size="sm" className="bg-primary" onClick={onPay} disabled={busy}>
+                  Pay ₦{order.totalAmount.toLocaleString()}
+                </Button>
+                <Button size="sm" variant="outline" className="text-destructive" onClick={onCancel} disabled={busy}>
+                  <XCircle className="w-3.5 h-3.5 mr-1" /> Cancel order
+                </Button>
+              </>
+            )}
+            {order.status === 'cancelled' && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> You cancelled this order</span>
             )}
             {(order.status === 'paid' || order.status === 'delivered') && !order.acknowledged && (
               <>
@@ -265,7 +314,13 @@ function SellerOrderCard({ order, onMessage }: { order: any; onMessage: () => vo
             {order.acknowledged && (
               <span className="text-xs text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Buyer acknowledged — payout ₦{order.sellerPayout.toLocaleString()} processing</span>
             )}
-            {!order.acknowledged && order.status !== 'disputed' && (
+            {!order.acknowledged && order.status === 'pending' && (
+              <span className="text-xs text-amber-600 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Awaiting payment from buyer</span>
+            )}
+            {order.status === 'cancelled' && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Buyer cancelled this order{order.cancelReason ? ` — "${order.cancelReason}"` : ''}</span>
+            )}
+            {!order.acknowledged && order.status !== 'disputed' && order.status !== 'pending' && order.status !== 'cancelled' && (
               <span className="text-xs text-amber-600 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Awaiting buyer acknowledgement</span>
             )}
             {order.status === 'disputed' && (

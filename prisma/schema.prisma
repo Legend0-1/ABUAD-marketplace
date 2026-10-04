@@ -39,6 +39,13 @@ model User {
   twoFactorSecret   String?
   twoFactorEnabled  Boolean  @default(false)
   emailVerified   Boolean  @default(false)
+  // Identity (KYC) verification. `idVerified` is the denormalized gate flag,
+  // flipped true only when an admin approves the user's uploaded government ID.
+  // The images and review metadata live in the IdVerification model so the
+  // large base64 blobs never load with ordinary session/user reads. Defaulted
+  // false so existing users are simply "not yet verified" (buying stays open;
+  // selling requires verification).
+  idVerified      Boolean  @default(false)
   // Preferred display currency (ISO 4217 code, e.g. "NGN", "USD"). Null means
   // NGN. Presentation only — all stored amounts remain in NGN; see lib/currency.
   currency        String?
@@ -68,6 +75,7 @@ model User {
   feedback        Feedback[]
   auditLogs       AuditLog[]
   deliveryPartnerProfile DeliveryPartnerProfile?
+  idVerification  IdVerification?
   deliveryRequestsAsCustomer DeliveryRequest[] @relation("DeliveryCustomer")
   deliveryMessagesSent DeliveryMessage[]
   referralCommissionsEarned ReferralCommission[] @relation("ReferralEarnings")
@@ -204,14 +212,16 @@ model Order {
   totalAmount     Float
   serviceCharge   Float    // 20% of net profit
   sellerPayout    Float    // amount to be paid to seller after charge
-  // "pending" | "paid" | "in_transit" | "delivered" | "acknowledged" | "disputed" | "refunded" | "completed"
+  // "pending" | "paid" | "in_transit" | "delivered" | "acknowledged" | "disputed" | "refunded" | "completed" | "cancelled"
   status          String   @default("pending")
   // Payment collection (buyer -> platform escrow account)
   paystackReference String?  @unique // reference used on the Paystack transaction
   paidAt          DateTime?
   // Payout (platform escrow account -> seller), released after acknowledgment
-  payoutStatus    String   @default("not_started") // "not_started" | "processing" | "success" | "failed"
+  payoutStatus    String   @default("not_started") // "not_started" | "processing" | "otp_pending" | "success" | "failed"
   transferReference String?
+  transferCode    String?  // Paystack transfer_code (TRF_...), needed to finalize an OTP transfer
+  payoutError     String?  // last payout failure reason, surfaced to admins for follow-up
   payoutAt        DateTime?
   // Buyer acknowledges receipt -> triggers payout
   acknowledged    Boolean  @default(false)
@@ -220,6 +230,10 @@ model Order {
   refundRequested Boolean  @default(false)
   refundReason    String?
   refundedAt      DateTime?
+  // Cancellation (buyer calls off an unpaid "pending" order). Only pending orders
+  // can be freely cancelled; a paid order must go through the refund/dispute flow.
+  cancelledAt     DateTime?
+  cancelReason    String?
   deliveryAddress String?
   deliveryNotes   String?
   createdAt       DateTime @default(now())
@@ -350,6 +364,29 @@ model Setting {
 //     the item. serviceFee still waits for customer confirmation like normal.
 //   errand_only: no purchase, no customer<->partner contact at all (per spec).
 //     Full serviceFee is held until the customer confirms completion.
+
+// Identity (KYC) verification: a user uploads front/back images of a government
+// ID so an admin can confirm they are who they say before they are allowed to
+// sell. One record per user (resubmission overwrites it). Images are stored as
+// base64 data URLs, the same pattern used for product media and the delivery
+// partner KYC video. Treat the images and any ID numbers as sensitive PII.
+model IdVerification {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // "national_id" | "voters_card" | "drivers_license" | "passport"
+  idType          String
+  frontImageUrl   String   // data URL
+  backImageUrl    String?  // data URL - passports are single-page, so optional
+  // "pending" | "approved" | "rejected"
+  status          String   @default("pending")
+  reviewedById    String?  // admin who approved/rejected
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model DeliveryPartnerProfile {
   id              String   @id @default(cuid())
   userId          String   @unique

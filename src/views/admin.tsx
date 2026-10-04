@@ -24,6 +24,8 @@ import { AdminAuditLog } from '@/components/admin-audit-log'
 import { AdminRevenueReport } from '@/components/admin-revenue-report'
 import { AdminReferralManager } from '@/components/admin-referral-manager'
 import { AdminApprovalsManager } from '@/components/admin-approvals-manager'
+import { AdminPayoutsManager } from '@/components/admin-payouts-manager'
+import { AdminVerificationsManager } from '@/components/admin-verifications-manager'
 
 export function AdminPage() {
   const { user, setView, setAuthModalOpen } = useStore()
@@ -34,17 +36,21 @@ export function AdminPage() {
   const [reports, setReports] = useState<any[]>([])
   const [conversations, setConversations] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
+  const [pendingPayouts, setPendingPayouts] = useState(0)
+  const [pendingVerifs, setPendingVerifs] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const reload = async () => {
     setLoading(true)
-    const [dash, sf, us, rep, convs, ords] = await Promise.all([
+    const [dash, sf, us, rep, convs, ords, pay, ver] = await Promise.all([
       api('/api/admin/dashboard'),
       api('/api/admin/storefronts'),
       api('/api/admin/users'),
       api('/api/admin/reports'),
       api('/api/admin/messages'),
       api('/api/admin/orders'),
+      api<{ count: number }>('/api/admin/payouts'),
+      api<{ count: number }>('/api/admin/verifications?count=1'),
     ])
     if (dash.data) setStats(dash.data)
     if (sf.data?.storefronts) setStorefronts(sf.data.storefronts)
@@ -52,6 +58,8 @@ export function AdminPage() {
     if (rep.data?.reports) setReports(rep.data.reports)
     if (convs.data?.conversations) setConversations(convs.data.conversations)
     if (ords.data?.orders) setOrders(ords.data.orders)
+    if (typeof pay.data?.count === 'number') setPendingPayouts(pay.data.count)
+    if (typeof ver.data?.count === 'number') setPendingVerifs(ver.data.count)
     setLoading(false)
   }
 
@@ -102,6 +110,12 @@ export function AdminPage() {
           <TabsTrigger value="messages">Messages {conversations.length > 0 && <Badge className="ml-1" variant="secondary">{conversations.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="reports">Reports {stats?.openReports > 0 && <Badge className="ml-1 bg-red-500 text-white">{stats.openReports}</Badge>}</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="payouts">
+            Payouts {pendingPayouts > 0 && <Badge className="ml-1 bg-amber-500 text-white">{pendingPayouts}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="verifications">
+            Verifications {pendingVerifs > 0 && <Badge className="ml-1 bg-amber-500 text-white">{pendingVerifs}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
           <TabsTrigger value="agreement">Agreement</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -539,6 +553,16 @@ export function AdminPage() {
             </div>
           ))}
           {orders.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No orders.</p>}
+        </TabsContent>
+
+        {/* Payouts */}
+        <TabsContent value="payouts" className="mt-4">
+          <AdminPayoutsManager />
+        </TabsContent>
+
+        {/* Identity verifications */}
+        <TabsContent value="verifications" className="mt-4">
+          <AdminVerificationsManager />
         </TabsContent>
 
         {/* Broadcast */}

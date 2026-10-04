@@ -16,6 +16,7 @@ export type SessionUser = {
   referralCode: string | null
   phone: string | null
   emailVerified: boolean
+  idVerified: boolean
   currency: string | null
   // Campus scoping: the institution the student registered under (free text),
   // plus the country/type it came from. `institution` is the campus identity
@@ -49,6 +50,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
         referralCode: true,
         phone: true,
         emailVerified: true,
+        idVerified: true,
         currency: true,
         country: true,
         institution: true,

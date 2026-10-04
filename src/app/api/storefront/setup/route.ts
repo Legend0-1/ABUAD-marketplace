@@ -9,6 +9,12 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    // Identity (KYC) gate: only verified users may open a storefront, to deter
+    // impersonation. The client routes to the verify-identity screen on this flag.
+    if (!user.idVerified) {
+      return NextResponse.json({ error: 'Verify your identity before opening a storefront.', needsVerification: true }, { status: 403 })
+    }
+
     // A storefront must belong to a campus so its listings can be scoped. The
     // campus is the owner's institution, which is guaranteed set at registration
     // (and re-settable via the campus-setup prompt).

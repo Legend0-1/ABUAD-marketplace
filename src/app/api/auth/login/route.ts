@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
         isHR: user.isHR,
         phone: user.phone,
         emailVerified: user.emailVerified,
+        idVerified: user.idVerified,
         twoFactorEnabled: user.twoFactorEnabled,
         currency: user.currency,
         country: user.country,

@@ -18,6 +18,7 @@ export function viewToPath(view: View): string {
     case 'admin': return '/admin'
     case 'agreement': return '/agreement'
     case 'setup-storefront': return '/setup-storefront'
+    case 'verify-identity': return '/verify-identity'
     case 'about': return '/about'
     case 'campus-safety': return '/campus-safety'
     case 'service-charge': return '/service-charge'
@@ -57,6 +58,7 @@ export function pathToView(pathname: string, search: URLSearchParams): View | nu
     case 'admin': return { name: 'admin' }
     case 'agreement': return { name: 'agreement' }
     case 'setup-storefront': return { name: 'setup-storefront' }
+    case 'verify-identity': return { name: 'verify-identity' }
     case 'about': return { name: 'about' }
     case 'campus-safety': return { name: 'campus-safety' }
     case 'service-charge': return { name: 'service-charge' }
