@@ -3,14 +3,17 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
 import {
-  isValidIdType, requiresBackImage, MAX_ID_IMAGE_CHARS, ID_TYPE_LABELS, type IdType,
+  isValidIdType, requiresBackImage, MAX_ID_IMAGE_CHARS, MAX_FACE_VIDEO_CHARS,
+  ID_TYPE_LABELS, type IdType,
 } from '@/lib/verification'
 
 // A signed-in user submits (or re-submits, after a rejection) their government
-// ID for review. Images arrive as data URLs — the same inline-media pattern used
-// for profile pictures and the delivery KYC video — and are stored on the single
+// ID for review, together with a short liveness (facial) video so the admin can
+// confirm the person in the video is the person on the document. Images and the
+// video arrive as data URLs — the same inline-media pattern used for profile
+// pictures and the delivery KYC video — and are stored on the single
 // IdVerification row keyed to the user. Treat these as sensitive PII: validate
-// the type, cap the size, and never log the image bytes.
+// the type, cap the size, and never log the bytes.
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -26,8 +29,8 @@ export async function POST(req: NextRequest) {
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    const { idType, frontImageUrl, backImageUrl } = body as {
-      idType?: string; frontImageUrl?: string; backImageUrl?: string
+    const { idType, frontImageUrl, backImageUrl, faceVideoUrl } = body as {
+      idType?: string; frontImageUrl?: string; backImageUrl?: string; faceVideoUrl?: string
     }
 
     if (!isValidIdType(idType)) {
@@ -59,8 +62,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Upload a photo of the back of your ID as well.' }, { status: 400 })
     }
 
+    // Liveness video: required, so every reviewed submission carries a clip we
+    // can match against the ID photo. Must be a video data URL within the cap.
+    if (typeof faceVideoUrl !== 'string' || !faceVideoUrl.startsWith('data:video')) {
+      return NextResponse.json({ error: 'Record a short facial video so we can confirm it\'s you.' }, { status: 400 })
+    }
+    if (faceVideoUrl.length > MAX_FACE_VIDEO_CHARS) {
+      return NextResponse.json({ error: 'The video is too large. Please record a shorter clip.' }, { status: 413 })
+    }
+
     // One record per user (userId is unique). Create on first submit; on a
-    // re-submit after rejection, overwrite the images and reset to "pending"
+    // re-submit after rejection, overwrite the media and reset to "pending"
     // so it re-enters the admin queue with the review fields cleared.
     const record = await db.idVerification.upsert({
       where: { userId: user.id },
@@ -69,12 +81,14 @@ export async function POST(req: NextRequest) {
         idType: idType as IdType,
         frontImageUrl,
         backImageUrl: backUrl,
+        faceVideoUrl,
         status: 'pending',
       },
       update: {
         idType: idType as IdType,
         frontImageUrl,
         backImageUrl: backUrl,
+        faceVideoUrl,
         status: 'pending',
         rejectionReason: null,
         reviewedById: null,

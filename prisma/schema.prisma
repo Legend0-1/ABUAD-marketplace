@@ -366,10 +366,12 @@ model Setting {
 //     Full serviceFee is held until the customer confirms completion.
 
 // Identity (KYC) verification: a user uploads front/back images of a government
-// ID so an admin can confirm they are who they say before they are allowed to
-// sell. One record per user (resubmission overwrites it). Images are stored as
-// base64 data URLs, the same pattern used for product media and the delivery
-// partner KYC video. Treat the images and any ID numbers as sensitive PII.
+// ID AND records a short liveness (facial) video so an admin can confirm they are
+// who they say — and that they are the person on the document — before they are
+// allowed to sell. One record per user (resubmission overwrites it). Images and
+// the video are stored as base64 data URLs, the same pattern used for product
+// media and the delivery partner KYC video. Treat the ID images, any ID numbers,
+// and the facial video as sensitive PII.
 model IdVerification {
   id              String   @id @default(cuid())
   userId          String   @unique
@@ -378,6 +380,7 @@ model IdVerification {
   idType          String
   frontImageUrl   String   // data URL
   backImageUrl    String?  // data URL - passports are single-page, so optional
+  faceVideoUrl    String?  // data URL - short selfie/liveness clip binding the user to the ID
   // "pending" | "approved" | "rejected"
   status          String   @default("pending")
   reviewedById    String?  // admin who approved/rejected

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -8,9 +8,12 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ChevronRight, ShieldCheck, Loader2, CheckCircle2, Clock, XCircle, Upload, X, Lock, IdCard,
+  Video, Square, RotateCcw, Camera, AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { ID_TYPES, ID_TYPE_LABELS, requiresBackImage, type IdType } from '@/lib/verification'
+import {
+  ID_TYPES, ID_TYPE_LABELS, requiresBackImage, FACE_VIDEO_SECONDS, MAX_FACE_VIDEO_CHARS, type IdType,
+} from '@/lib/verification'
 
 type MyVerification = {
   idType: string
@@ -32,6 +35,7 @@ export function VerifyIdentityPage() {
   const [idType, setIdType] = useState<IdType>('national_id')
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
+  const [faceVideo, setFaceVideo] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -73,16 +77,17 @@ export function VerifyIdentityPage() {
   const submit = async () => {
     if (!front) { toast.error('Upload a photo of the front of your ID'); return }
     if (requiresBackImage(idType) && !back) { toast.error('Upload a photo of the back of your ID too'); return }
+    if (!faceVideo) { toast.error('Record the short facial video so we can confirm it\'s you'); return }
     setBusy(true)
     const { data, error } = await api<{ message?: string }>('/api/verification/submit', {
       method: 'POST',
-      body: { idType, frontImageUrl: front, backImageUrl: back || undefined },
+      body: { idType, frontImageUrl: front, backImageUrl: back || undefined, faceVideoUrl: faceVideo },
     })
     setBusy(false)
     if (error) { toast.error('Could not submit', { description: error }); return }
     toast.success('Submitted for review', { description: data?.message })
     setRecord({ idType, status: 'pending' })
-    setFront(''); setBack('')
+    setFront(''); setBack(''); setFaceVideo('')
     // Keep the store's user flag in sync (still unverified until an admin approves,
     // but this refreshes any other derived state cleanly).
     api<{ user: any }>('/api/auth/me').then(({ data }) => { if (data?.user) setUser(data.user) })
@@ -197,6 +202,8 @@ export function VerifyIdentityPage() {
             )}
           </div>
 
+          <LivenessRecorder value={faceVideo} onChange={setFaceVideo} />
+
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => setView({ name: 'home' })}>Cancel</Button>
             <Button onClick={submit} disabled={busy} size="lg">
@@ -241,6 +248,206 @@ function ImageDropzone({
           <Upload className="w-6 h-6 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Tap to upload or take a photo</span>
         </label>
+      )}
+    </div>
+  )
+}
+
+// Picks the first container/codec the browser will actually record. Chrome/Edge
+// give us WebM; Safari (iOS/macOS) tends to give MP4. An empty string lets the
+// browser use its own default if none of these are reported.
+function pickRecorderMime(): string {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') return ''
+  const candidates = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4',
+  ]
+  for (const c of candidates) {
+    try { if (MediaRecorder.isTypeSupported(c)) return c } catch { /* ignore */ }
+  }
+  return ''
+}
+
+// A short, scripted liveness (selfie) recording — the same idea as a bank app's
+// "record a video to confirm it's you" step. The user films their own face with
+// the front camera for a few seconds; the clip is stored with the submission so
+// an admin can match the face against the ID photo. Nothing is uploaded here —
+// the parent holds the data URL and sends it with the rest of the submission.
+function LivenessRecorder({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const liveRef = useRef<HTMLVideoElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const recorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const [cameraOn, setCameraOn] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [secondsLeft, setSecondsLeft] = useState(FACE_VIDEO_SECONDS)
+  const [cameraError, setCameraError] = useState('')
+
+  const supported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+    && typeof MediaRecorder !== 'undefined'
+
+  // Always release the camera when the component unmounts so the indicator light
+  // doesn't stay on after the user navigates away.
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+    }
+  }, [])
+
+  const startCamera = async () => {
+    setCameraError('')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } },
+        audio: false,
+      })
+      streamRef.current = stream
+      setCameraOn(true)
+      // Attach once React has rendered the <video> element.
+      requestAnimationFrame(() => {
+        if (liveRef.current) {
+          liveRef.current.srcObject = stream
+          liveRef.current.play().catch(() => {})
+        }
+      })
+    } catch {
+      setCameraError('We couldn\'t access your camera. Allow camera access in your browser, then try again.')
+    }
+  }
+
+  const stopCamera = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+    setCameraOn(false)
+    setRecording(false)
+  }
+
+  const startRecording = () => {
+    const stream = streamRef.current
+    if (!stream || recording) return
+    try {
+      const mimeType = pickRecorderMime()
+      const rec = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+      chunksRef.current = []
+      rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data) }
+      rec.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || 'video/webm' })
+        chunksRef.current = []
+        if (blob.size === 0) { toast.error('Nothing was recorded — please try again'); return }
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          if (result.length > MAX_FACE_VIDEO_CHARS) {
+            toast.error('Video too large', { description: 'Please record a shorter clip.' })
+            return
+          }
+          onChange(result)
+        }
+        reader.readAsDataURL(blob)
+      }
+      recorderRef.current = rec
+      rec.start()
+      setRecording(true)
+      setSecondsLeft(FACE_VIDEO_SECONDS)
+      // Auto-stop after FACE_VIDEO_SECONDS. We compute remaining time from a
+      // wall-clock deadline so the countdown stays accurate even if the interval
+      // is throttled in a background tab.
+      const deadline = Date.now() + FACE_VIDEO_SECONDS * 1000
+      timerRef.current = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+        setSecondsLeft(remaining)
+        if (remaining <= 0) finishRecording()
+      }, 250)
+    } catch {
+      toast.error('Recording isn\'t supported here', { description: 'Try a recent Chrome, Edge, or Safari.' })
+    }
+  }
+
+  // Shared end-of-recording path for both the auto-stop timer and the Stop button.
+  const finishRecording = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    if (recorderRef.current && recorderRef.current.state === 'recording') {
+      try { recorderRef.current.stop() } catch { /* ignore */ }
+    }
+    setRecording(false)
+    stopCamera()
+  }
+
+  const redo = () => { onChange(''); setSecondsLeft(FACE_VIDEO_SECONDS) }
+
+  return (
+    <div>
+      <Label className="flex items-center gap-1.5 mb-1">
+        <Video className="w-4 h-4 text-primary" /> Facial video (liveness check) <span className="text-destructive">*</span>
+      </Label>
+
+      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-400 flex gap-2 mb-2">
+        <Lock className="w-4 h-4 shrink-0 mt-0.5" />
+        <span>Record a {FACE_VIDEO_SECONDS}-second video of your face — look straight at the camera and slowly turn your head. This confirms you match the photo on your ID. Only UNI MART admins can see it.</span>
+      </div>
+
+      {value ? (
+        // Already recorded — show the clip with a redo option.
+        <div className="relative">
+          <video
+            src={value}
+            controls
+            playsInline
+            className="w-full max-w-xs mx-auto rounded-lg border bg-black"
+          />
+          <div className="flex justify-center mt-2">
+            <Button type="button" variant="outline" size="sm" onClick={redo}>
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Record again
+            </Button>
+          </div>
+        </div>
+      ) : cameraOn ? (
+        // Live camera preview + record / stop controls.
+        <div className="flex flex-col items-center">
+          <div className="relative w-full max-w-xs rounded-lg overflow-hidden border bg-black">
+            <video ref={liveRef} muted playsInline className="w-full aspect-[3/4] object-cover" />
+            {recording && (
+              <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> {secondsLeft}s
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mt-2">
+            {recording ? (
+              <Button type="button" size="sm" variant="destructive" onClick={finishRecording}>
+                <Square className="w-3.5 h-3.5 mr-1.5" /> Stop
+              </Button>
+            ) : (
+              <Button type="button" size="sm" onClick={startRecording}>
+                <Video className="w-3.5 h-3.5 mr-1.5" /> Start recording
+              </Button>
+            )}
+            <Button type="button" size="sm" variant="ghost" onClick={stopCamera} disabled={recording}>Cancel</Button>
+          </div>
+        </div>
+      ) : (
+        // Idle — prompt to open the camera.
+        <div className="flex flex-col items-center gap-2">
+          {cameraError ? (
+            <div className="flex gap-2 text-xs text-destructive bg-destructive/10 rounded-lg p-3 w-full">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{cameraError}</span>
+            </div>
+          ) : null}
+          <Button type="button" variant="outline" onClick={supported ? startCamera : undefined} disabled={!supported}>
+            <Camera className="w-4 h-4 mr-2" /> {cameraError ? 'Try camera again' : 'Open camera'}
+          </Button>
+          {!supported && (
+            <p className="text-xs text-muted-foreground text-center">
+              Video recording isn't supported in this browser. Please open UNI MART in a recent Chrome, Edge, or Safari to verify.
+            </p>
+          )}
+        </div>
       )}
     </div>
   )

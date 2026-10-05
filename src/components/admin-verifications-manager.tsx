@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ID_TYPE_LABELS, type IdType } from '@/lib/verification'
 import {
-  ShieldCheck, Loader2, RefreshCw, CheckCircle2, XCircle, Clock, Eye, ChevronDown, ChevronUp, IdCard,
+  ShieldCheck, Loader2, RefreshCw, CheckCircle2, XCircle, Clock, Eye, ChevronDown, ChevronUp, IdCard, Video,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -34,14 +34,15 @@ type VerifListItem = {
   user: VerifUser
 }
 
-// Image payloads live on a separate detail endpoint so the list stays light and
-// sensitive ID photos are only pulled when an admin actually opens a record.
+// Image and video payloads live on a separate detail endpoint so the list stays
+// light and sensitive ID media is only pulled when an admin actually opens a record.
 type VerifDetail = {
   id: string
   idType: string
   status: string
   frontImageUrl: string
   backImageUrl?: string | null
+  faceVideoUrl?: string | null
   rejectionReason?: string | null
 }
 
@@ -100,7 +101,7 @@ export function AdminVerificationsManager() {
 
       <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-500/30 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-400 flex gap-2">
         <IdCard className="w-4 h-4 shrink-0 mt-0.5" />
-        <span>These photos are sensitive personal data. Open a submission only to review it, and approve only when the photo is clear and the details match the account holder. Reject with a short reason so the student knows what to fix.</span>
+        <span>These photos and the liveness video are sensitive personal data. Open a submission only to review it, and approve only when the ID is clear, the details match the account holder, and the face in the video matches the photo on the document. Reject with a short reason so the student knows what to fix.</span>
       </div>
 
       {/* Pending queue */}
@@ -216,17 +217,29 @@ function VerificationCard({
               <Skeleton className="aspect-[16/10] w-full" />
             </div>
           ) : detail ? (
-            <div className="grid sm:grid-cols-2 gap-3">
-              <figure>
-                <figcaption className="text-[11px] text-muted-foreground mb-1">Front</figcaption>
-                <img src={detail.frontImageUrl} alt="ID front" className="w-full rounded border bg-muted object-contain max-h-64" />
-              </figure>
-              {detail.backImageUrl && (
+            <div className="space-y-3">
+              <div className="grid sm:grid-cols-2 gap-3">
                 <figure>
-                  <figcaption className="text-[11px] text-muted-foreground mb-1">Back</figcaption>
-                  <img src={detail.backImageUrl} alt="ID back" className="w-full rounded border bg-muted object-contain max-h-64" />
+                  <figcaption className="text-[11px] text-muted-foreground mb-1">Front</figcaption>
+                  <img src={detail.frontImageUrl} alt="ID front" className="w-full rounded border bg-muted object-contain max-h-64" />
                 </figure>
-              )}
+                {detail.backImageUrl && (
+                  <figure>
+                    <figcaption className="text-[11px] text-muted-foreground mb-1">Back</figcaption>
+                    <img src={detail.backImageUrl} alt="ID back" className="w-full rounded border bg-muted object-contain max-h-64" />
+                  </figure>
+                )}
+              </div>
+              <figure>
+                <figcaption className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
+                  <Video className="w-3 h-3" /> Liveness video — matches the face on the ID?
+                </figcaption>
+                {detail.faceVideoUrl ? (
+                  <video src={detail.faceVideoUrl} controls playsInline className="w-full max-w-xs rounded border bg-black" />
+                ) : (
+                  <p className="text-xs text-muted-foreground">No video was submitted.</p>
+                )}
+              </figure>
             </div>
           ) : (
             <p className="text-xs text-destructive">Could not load the images.</p>
