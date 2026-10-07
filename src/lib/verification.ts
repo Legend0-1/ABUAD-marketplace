@@ -28,14 +28,15 @@ export function isValidIdType(t: unknown): t is IdType {
 export const MAX_ID_IMAGE_CHARS = 7_000_000
 
 // The liveness clip is recorded and stored the same way (a base64 data URL).
-// A few seconds of phone-camera video is well under a megabyte, but we allow
-// generous headroom (~11MB of base64) so longer/less-compressed recordings
-// still succeed — while keeping a hard ceiling on the row and the request body.
-export const MAX_FACE_VIDEO_CHARS = 15_000_000
+// A ~15-second phone-camera selfie is usually only a few MB, but we allow
+// generous headroom (~25M chars of base64 ≈ ~18MB) so longer or less-compressed
+// recordings still succeed — while keeping a hard ceiling on the row and the
+// request body.
+export const MAX_FACE_VIDEO_CHARS = 25_000_000
 
-// How long we ask the user to record for. Kept short (like a bank's selfie
-// check) so the clip is small, quick to upload, and easy for the admin to scan.
-export const FACE_VIDEO_SECONDS = 5
+// How long we ask the user to record for. Long enough to clearly capture the
+// face (like a bank's selfie check) while staying small and quick to upload.
+export const FACE_VIDEO_SECONDS = 15
 
 // A verification record is "locked" (no new submissions accepted) only when it
 // has already been approved. Pending and rejected can both be (re)submitted.

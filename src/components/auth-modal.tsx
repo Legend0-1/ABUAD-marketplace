@@ -74,10 +74,6 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error('Enter a valid WhatsApp number')
       return
     }
-    if (!form.referralCode.trim()) {
-      toast.error('A referral code from an existing UNI MART student is required to join')
-      return
-    }
     if (form.password.length < 6) {
       toast.error('Password must be at least 6 characters')
       return
@@ -259,9 +255,9 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                 <Input id="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="referralCode">Referral Code <span className="text-destructive">*</span></Label>
+                <Label htmlFor="referralCode">Referral Code <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input id="referralCode" value={form.referralCode} onChange={(e) => setForm({ ...form, referralCode: e.target.value.toUpperCase() })} placeholder="e.g. UM-A7X9K2" />
-                <p className="text-[11px] text-muted-foreground mt-1">Ask a friend already on UNI MART for their code — find it on their Profile page.</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Have a friend already on UNI MART? Add their code (find it on their Profile page) — or leave this blank.</p>
               </div>
             </div>
 

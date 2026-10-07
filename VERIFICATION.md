@@ -20,7 +20,7 @@ protects buyers from fake sellers.
      gallery, max 5MB each), and
    - record a **short facial (liveness) video** — the same "record a video to confirm
      it's you" step bank apps use. The front camera opens; the user looks at it and
-     slowly turns their head; recording auto-stops after ~5 seconds (or they tap Stop).
+     slowly turns their head; recording auto-stops after ~15 seconds (or they tap Stop).
      The clip is re-recordable and required before the form will submit.
 3. **Review.** The submission enters the admin queue as `pending`.
 4. **Outcome.**
@@ -82,7 +82,7 @@ implementation minimizes exposure deliberately:
   image and video data URLs are served solely from `/api/admin/verifications/[id]`,
   which an admin calls only when opening one record to review it.
 - **Size-capped.** Each image is capped at ~5MB (`MAX_ID_IMAGE_CHARS`) and the video
-  at `MAX_FACE_VIDEO_CHARS` (~11MB of base64), at both the client and the API, so a
+  at `MAX_FACE_VIDEO_CHARS` (~18MB of base64), at both the client and the API, so a
   submission can't bloat the row or the request body.
 - **Validated.** The API checks the ID type against the shared allow-list, requires a
   `data:image...` payload for the photos (a back image is required for cards and
@@ -125,8 +125,9 @@ implementation minimizes exposure deliberately:
       to `/api/verification/submit` with a non-`data:video` value is rejected.
 - [ ] A >5MB image is rejected client-side and server-side; an over-long video is
       rejected client-side and server-side.
-- [ ] The camera opens, the countdown auto-stops after ~5s, "Record again" replaces
-      the clip, and the recorded clip plays back.
+- [ ] The camera opens and the live feed is visible immediately (you can see
+      yourself while recording — not a black screen); the countdown auto-stops
+      after ~15s, "Record again" replaces the clip, and the recorded clip plays back.
 - [ ] After submit, the user sees "Under review"; the admin tab badge increments.
 - [ ] Admin "View ID" loads both images **and the liveness video**; approving flips
       the user to verified and the "Action needed" nav badge disappears.

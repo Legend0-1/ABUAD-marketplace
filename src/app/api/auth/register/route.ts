@@ -32,9 +32,6 @@ export async function POST(req: NextRequest) {
     if (!/^[\d+\s()-]{7,20}$/.test(String(phone).trim())) {
       return NextResponse.json({ error: 'Enter a valid WhatsApp number' }, { status: 400 })
     }
-    if (!referralCode?.trim()) {
-      return NextResponse.json({ error: 'A referral code is required to join UNI MART' }, { status: 400 })
-    }
 
     // Country + institution. The platform is multi-country; the admin controls
     // which countries are open for registration. Validate the submitted country
@@ -70,9 +67,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A user with this email or matric number already exists' }, { status: 400 })
     }
 
-    const referrer = await db.user.findUnique({ where: { referralCode: referralCode.trim().toUpperCase() } })
-    if (!referrer) {
-      return NextResponse.json({ error: 'That referral code doesn\'t match any account. Double-check it with whoever gave it to you.' }, { status: 400 })
+    // Referral is optional. If a code is supplied it must be valid; if it's left
+    // blank, the user simply joins without a referrer.
+    const referralInput = referralCode?.trim()
+    const referrer = referralInput
+      ? await db.user.findUnique({ where: { referralCode: referralInput.toUpperCase() } })
+      : null
+    if (referralInput && !referrer) {
+      return NextResponse.json({ error: 'That referral code doesn\'t match any account. Double-check it, or leave it blank to continue without one.' }, { status: 400 })
     }
 
     const newReferralCode = await generateUniqueReferralCode()
@@ -88,7 +90,7 @@ export async function POST(req: NextRequest) {
         phone: String(phone).trim(),
         profilePicture: profilePicture || null,
         referralCode: newReferralCode,
-        referredById: referrer.id,
+        referredById: referrer?.id ?? null,
         country: countryCode,
         institution: institutionName,
         institutionType: institutionType ?? null,

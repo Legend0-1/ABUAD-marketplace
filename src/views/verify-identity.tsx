@@ -299,6 +299,20 @@ function LivenessRecorder({ value, onChange }: { value: string; onChange: (v: st
     }
   }, [])
 
+  // Show the live camera feed the moment the preview is on screen. We attach the
+  // MediaStream here, in an effect, rather than right after getUserMedia — that
+  // way the <video> element is guaranteed to be mounted (its ref is set), so you
+  // see yourself immediately instead of a black frame that only "fills in" after
+  // recording. Together with autoPlay + muted on the element, this behaves like a
+  // phone's video recorder: the live feed is visible while you record.
+  useEffect(() => {
+    const el = liveRef.current
+    if (cameraOn && el && streamRef.current) {
+      el.srcObject = streamRef.current
+      el.play().catch(() => {})
+    }
+  }, [cameraOn])
+
   const startCamera = async () => {
     setCameraError('')
     try {
@@ -307,14 +321,9 @@ function LivenessRecorder({ value, onChange }: { value: string; onChange: (v: st
         audio: false,
       })
       streamRef.current = stream
+      // Flip the preview on; the effect above attaches the stream to the <video>
+      // as soon as the element is mounted, so the live feed shows right away.
       setCameraOn(true)
-      // Attach once React has rendered the <video> element.
-      requestAnimationFrame(() => {
-        if (liveRef.current) {
-          liveRef.current.srcObject = stream
-          liveRef.current.play().catch(() => {})
-        }
-      })
     } catch {
       setCameraError('We couldn\'t access your camera. Allow camera access in your browser, then try again.')
     }
@@ -411,7 +420,7 @@ function LivenessRecorder({ value, onChange }: { value: string; onChange: (v: st
         // Live camera preview + record / stop controls.
         <div className="flex flex-col items-center">
           <div className="relative w-full max-w-xs rounded-lg overflow-hidden border bg-black">
-            <video ref={liveRef} muted playsInline className="w-full aspect-[3/4] object-cover" />
+            <video ref={liveRef} autoPlay muted playsInline className="w-full aspect-[3/4] object-cover" />
             {recording && (
               <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> {secondsLeft}s
